@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <style>
         * {
@@ -19,104 +19,158 @@
 
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, #ffffff, #e3f2fd);
+            background: linear-gradient(135deg, #f8f9ff, #eef4ff);
             padding: 20px;
             overflow-x: hidden;
-            color: #1e3a8a;
+            color: #2c3e50;
+            transition: background 0.5s ease;
         }
 
         .container {
             max-width: 1280px;
             margin: 0 auto;
+            padding: 0 20px;
         }
 
         .header {
             text-align: center;
-            margin: 40px 0;
+            margin: 60px 0 40px;
             animation: fadeIn 0.8s ease-out;
+            position: relative;
         }
 
         .header h1 {
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             font-weight: 600;
-            color: #1e3a8a;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: #1a365d;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            letter-spacing: -0.5px;
         }
 
         .header p {
-            font-size: 1.1rem;
-            color: #4b6cb7;
-            margin-top: 10px;
-            opacity: 0.9;
+            font-size: 1.15rem;
+            color: #4b5563;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .header::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #8e44ad);
+            border-radius: 2px;
+            margin: 20px auto 0;
         }
 
         .home-icon {
             position: fixed;
             top: 20px;
             left: 20px;
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 12px;
-            padding: 12px;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            transition: transform 0.2s ease, background 0.2s ease;
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 14px;
+            padding: 14px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .home-icon:hover {
-            transform: scale(1.1);
-            background: rgba(255, 255, 255, 0.8);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
         }
 
         .home-icon img {
-            width: 28px;
-            height: 28px;
+            width: 26px;
+            height: 26px;
+            transition: transform 0.3s ease;
+        }
+
+        .home-icon:hover img {
+            transform: scale(1.1);
         }
 
         .section {
-            background: rgba(255, 255, 255, 0.5);
-            border-radius: 20px;
-            padding: 24px;
+            background: rgba(255, 255, 255, 0.45);
+            border-radius: 24px;
+            padding: 30px;
             margin-bottom: 40px;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: all 0.4s ease;
+        }
+
+        .section:hover {
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
         }
 
         .image-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
+            gap: 24px;
         }
 
         .image-card {
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 16px;
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 20px;
+            padding: 0;
             text-align: center;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
-            will-change: transform, box-shadow;
-            min-height: 320px; /* Prevent layout shift */
+            overflow: hidden;
+            will-change: transform;
+            min-height: 340px;
+            position: relative;
         }
 
         .image-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .image-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #3498db, #8e44ad);
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-card:hover::before {
+            opacity: 1;
         }
 
         .image-card img {
             width: 100%;
             height: 200px;
-            border-radius: 12px;
-            margin-bottom: 12px;
+            border-radius: 20px 20px 0 0;
             object-fit: cover;
             display: block;
-            transition: opacity 0.3s ease;
+            transition: all 0.4s ease;
+            filter: brightness(0.97);
+        }
+
+        .image-card:hover img {
+            transform: scale(1.03);
+            filter: brightness(1);
         }
 
         .image-card img[loading="lazy"] {
@@ -125,53 +179,89 @@
 
         .image-card img.loaded {
             opacity: 1;
+            transition: opacity 0.3s ease;
         }
 
-        .uploader-info p {
-            font-size: 0.9rem;
-            color: #1e3a8a;
-            font-weight: 400;
-            margin-bottom: 12px;
+        .image-info {
+            padding: 15px;
+            text-align: left;
         }
 
-        .download-btn {
-            background: #2196f3;
-            color: #ffffff;
-            padding: 10px 16px;
-            border-radius: 8px;
-            border: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
+        .uploader-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #8e44ad);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-            width: 100%;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
         }
 
-        .download-btn:hover {
-            background: #1976d2;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        .uploader-info p {
+            font-size: 0.95rem;
+            color: #2c3e50;
+            font-weight: 400;
         }
 
-        .download-btn i {
-            font-size: 1rem;
+        .image-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #1a365d;
+            margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        .loading-spinner {
-            border: 5px solid rgba(255, 255, 255, 0.4);
-            border-top: 5px solid #2196f3;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 30px auto;
+        .image-description {
+            font-size: 0.9rem;
+            color: #4b5563;
+            line-height: 1.5;
+            height: 60px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+        }
+
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 40px 0;
             display: none;
+        }
+
+        .loading-bar {
+            width: 200px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-bar::before {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #8e44ad);
+            border-radius: 4px;
+            animation: slide 1.5s ease-in-out infinite, pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
         }
 
         .lightbox {
@@ -181,81 +271,125 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0, 0, 0, 0.92);
             z-index: 2000;
             align-items: center;
             justify-content: center;
             flex-direction: column;
             animation: fadeIn 0.3s ease-out;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
         }
 
         .lightbox-image {
             max-width: 90%;
             max-height: 70%;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease;
+        }
+
+        .lightbox-content {
+            max-width: 700px;
+            text-align: center;
+            padding: 0 20px;
         }
 
         .lightbox-info {
             color: #ffffff;
-            margin: 16px 0;
-            font-size: 1rem;
+            margin: 20px 0;
+            font-size: 1.1rem;
             font-weight: 400;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
-        .lightbox-download {
-            background: #2196f3;
+        .lightbox-controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .lightbox-btn {
+            background: rgba(255, 255, 255, 0.15);
             color: #ffffff;
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 12px 24px;
+            border-radius: 50px;
             border: none;
-            font-size: 0.9rem;
-            font-weight: 600;
+            font-size: 1rem;
+            font-weight: 500;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            gap: 10px;
+            transition: all 0.3s ease;
             backdrop-filter: blur(10px);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .lightbox-download:hover {
-            background: #1976d2;
+        .lightbox-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
         }
 
         .lightbox-close {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 2.5rem;
-            color: #ffffff;
+            top: 25px;
+            right: 25px;
+            font-size: 2.8rem;
+            color: rgba(255, 255, 255, 0.8);
             cursor: pointer;
-            transition: color 0.2s ease, transform 0.2s ease;
+            transition: all 0.3s ease;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
         }
 
         .lightbox-close:hover {
-            color: #ff5252;
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
             transform: scale(1.1);
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .empty-state {
+            text-align: center;
+            padding: 60px 0;
+            color: #6b7280;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #d1d5db;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #4b5563;
+        }
+
+        @keyframes slide {
+            0% { transform: translateX(-100px); }
+            50% { transform: translateX(140px); }
+            100% { transform: translateX(-100px); }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.8; transform: scaleY(1); }
+            50% { opacity: 0.5; transform: scaleY(1.5); }
+            100% { opacity: 0.8; transform: scaleY(1); }
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @media (max-width: 768px) {
             .header h1 {
-                font-size: 2rem;
+                font-size: 2.2rem;
             }
 
             .header p {
@@ -264,10 +398,11 @@
 
             .image-grid {
                 grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 18px;
             }
 
             .section {
-                padding: 20px;
+                padding: 25px;
             }
 
             .image-card img {
@@ -275,7 +410,7 @@
             }
 
             .image-card {
-                min-height: 300px;
+                min-height: 320px;
             }
         }
 
@@ -285,19 +420,15 @@
             }
 
             .header h1 {
-                font-size: 1.8rem;
+                font-size: 1.9rem;
             }
 
             .header p {
-                font-size: 0.9rem;
-            }
-
-            .image-card img {
-                height: 200px;
+                font-size: 0.92rem;
             }
 
             .image-card {
-                min-height: 280px;
+                min-height: 300px;
             }
 
             .lightbox-image {
@@ -313,19 +444,30 @@
     <div class="container">
         <header class="header">
             <h1>Nepali Image Gallery</h1>
-            <p>Discover the vibrant culture and landscapes of Nepal</p>
+            <p>Discover the vibrant culture, majestic landscapes, and rich heritage of Nepal through our curated collection</p>
         </header>
+        
         <div class="section">
-            <div class="loading-spinner" id="loadingSpinner"></div>
+            <div class="loading-container" id="loadingSpinner">
+                <div class="loading-bar"></div>
+            </div>
             <div class="image-grid" id="imageGrid"></div>
         </div>
     </div>
+    
     <div class="lightbox" id="lightbox">
         <span class="lightbox-close" onclick="closeLightbox()">×</span>
-        <img class="lightbox-image" id="lightboxImage" alt="Lightbox Image">
-        <div class="lightbox-info" id="lightboxInfo"></div>
-        <button class="lightbox-download" id="lightboxDownload"><i class="fas fa-download"></i> Download</button>
+        <div class="lightbox-content">
+            <img class="lightbox-image" id="lightboxImage" alt="Lightbox Image">
+            <div class="lightbox-info" id="lightboxInfo"></div>
+            <div class="lightbox-controls">
+                <button class="lightbox-btn" onclick="closeLightbox()">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+        </div>
     </div>
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
@@ -350,39 +492,26 @@
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZndxY3ZkbXZlcGZucmZhdW9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NDEzNDEsImV4cCI6MjA2MzAxNzM0MX0.JVZdY8iz_fk2KkiufoYbL49VHtblRq5OhA6pPMonWyY'
         );
 
-        // Download function (global scope)
-        window.downloadImage = async (url, filename) => {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Failed to fetch image');
-                const blob = await response.blob();
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = filename || 'image';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
-            } catch (error) {
-                alert('Failed to download image. Please try again.');
-                console.error('Download error:', error);
-            }
-        };
-
         // Lightbox functions
-        window.openLightbox = (src, username, filename) => {
+        window.openLightbox = (src, username, title, description) => {
             const lightbox = document.getElementById('lightbox');
             const lightboxImage = document.getElementById('lightboxImage');
             const lightboxInfo = document.getElementById('lightboxInfo');
-            const lightboxDownload = document.getElementById('lightboxDownload');
+            
             lightboxImage.src = src;
-            lightboxInfo.textContent = `Uploaded by ${username || 'Unknown'}`;
-            lightboxDownload.onclick = () => window.downloadImage(src, filename);
+            lightboxInfo.innerHTML = `
+                <div style="font-size: 1.4rem; margin-bottom: 8px;">${title}</div>
+                <div>Uploaded by ${username || 'Unknown'}</div>
+                ${description ? `<div style="margin-top: 15px; font-style: italic;">${description}</div>` : ''}
+            `;
+            
             lightbox.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
         };
 
         window.closeLightbox = () => {
             document.getElementById('lightbox').style.display = 'none';
+            document.body.style.overflow = 'auto';
         };
 
         // Load images with uploader info
@@ -390,7 +519,7 @@
             const imageGrid = document.getElementById('imageGrid');
             const loadingSpinner = document.getElementById('loadingSpinner');
             imageGrid.innerHTML = '';
-            loadingSpinner.style.display = 'block';
+            loadingSpinner.style.display = 'flex';
 
             try {
                 // Get list of files from Supabase
@@ -412,31 +541,47 @@
                     });
                 }
 
+                // Preload first few images
+                const preloadCount = Math.min(3, files.length);
+                for (let i = 0; i < preloadCount; i++) {
+                    if (files[i].name === '.') continue;
+                    const { publicUrl } = supabaseClient.storage.from('nepali').getPublicUrl(files[i].name).data;
+                    const link = document.createElement('link');
+                    link.rel = 'preload';
+                    link.as = 'image';
+                    link.href = publicUrl;
+                    document.head.appendChild(link);
+                }
+
                 // Create fragment to minimize reflows
                 const fragment = document.createDocumentFragment();
+                let hasImages = false;
+
                 for (const file of files) {
                     if (file.name === '.') continue;
+                    hasImages = true;
                     const { publicUrl } = supabaseClient.storage.from('nepali').getPublicUrl(file.name).data;
                     const metadata = imageMetadata.find(meta => meta.filename === file.name) || {};
                     const username = metadata.username || 'Unknown';
+                    const title = metadata.title || file.name.replace(/\.[^/.]+$/, '');
+                    const description = metadata.description || '';
 
                     const card = document.createElement('div');
                     card.className = 'image-card';
                     card.innerHTML = `
-                        <img src="${publicUrl}" alt="${file.name} uploaded by ${username}" loading="lazy">
-                        <div class="uploader-info">
-                            <p>Uploaded by ${username}</p>
+                        <img src="${publicUrl}" alt="${title}" loading="lazy">
+                        <div class="image-info">
+                            <div class="uploader-info">
+                                <div class="avatar">${username.charAt(0).toUpperCase()}</div>
+                                <p>${username}</p>
+                            </div>
+                            <div class="image-title">${title}</div>
+                            <div class="image-description">${description}</div>
                         </div>
-                        <button class="download-btn" onclick="window.downloadImage('${publicUrl}', '${file.name}')">
-                            <i class="fas fa-download"></i> Download
-                        </button>
                     `;
-                    card.onclick = (e) => {
-                        if (e.target.tagName !== 'BUTTON' && !e.target.closest('.download-btn')) {
-                            window.openLightbox(publicUrl, username, file.name);
-                        }
+                    card.onclick = () => {
+                        window.openLightbox(publicUrl, username, title, description);
                     };
-                    // Add loaded class when image loads
                     const img = card.querySelector('img');
                     if (img.complete) {
                         img.classList.add('loaded');
@@ -445,10 +590,27 @@
                     }
                     fragment.appendChild(card);
                 }
-                imageGrid.appendChild(fragment);
+
+                if (!hasImages) {
+                    imageGrid.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-image"></i>
+                            <h3>No Images Found</h3>
+                            <p>Upload some images to get started!</p>
+                        </div>
+                    `;
+                } else {
+                    imageGrid.appendChild(fragment);
+                }
                 console.log('Images loaded:', files.length);
             } catch (error) {
-                alert('Failed to load images. Please try again later.');
+                imageGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h3>Error Loading Images</h3>
+                        <p>Please try again later.</p>
+                    </div>
+                `;
                 console.error('Error:', error);
             } finally {
                 loadingSpinner.style.display = 'none';
