@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,474 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nepali Image Gallery</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        body {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #f8f9ff, #eef4ff);
-            padding: 20px;
-            overflow-x: hidden;
-            color: #2c3e50;
-            transition: background 0.5s ease;
-        }
-
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin: 60px 0 40px;
-            animation: fadeIn 0.8s ease-out;
-            position: relative;
-        }
-
-        .header h1 {
-            font-size: 2.8rem;
-            font-weight: 600;
-            color: #1a365d;
-            margin-bottom: 12px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            letter-spacing: -0.5px;
-        }
-
-        .header p {
-            font-size: 1.15rem;
-            color: #4b5563;
-            max-width: 600px;
-            margin: 0 auto;
-            line-height: 1.6;
-            font-weight: 300;
-        }
-
-        .header::after {
-            content: '';
-            display: block;
-            width: 80px;
-            height: 4px;
-            background: linear-gradient(90deg, #3498db, #8e44ad);
-            border-radius: 2px;
-            margin: 20px auto 0;
-        }
-
-        .home-icon {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.85);
-            border-radius: 14px;
-            padding: 14px;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .home-icon:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
-        }
-
-        .home-icon img {
-            width: 26px;
-            height: 26px;
-            transition: transform 0.3s ease;
-        }
-
-        .home-icon:hover img {
-            transform: scale(1.1);
-        }
-
-        .section {
-            background: rgba(255, 255, 255, 0.45);
-            border-radius: 24px;
-            padding: 30px;
-            margin-bottom: 40px;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.07);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            transition: all 0.4s ease;
-        }
-
-        .section:hover {
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.1);
-        }
-
-        .image-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-        }
-
-        .image-card {
-            background: rgba(255, 255, 255, 0.7);
-            border-radius: 20px;
-            padding: 0;
-            text-align: center;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            cursor: pointer;
-            overflow: hidden;
-            will-change: transform;
-            min-height: 340px;
-            position: relative;
-        }
-
-        .image-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-        }
-
-        .image-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 5px;
-            background: linear-gradient(90deg, #3498db, #8e44ad);
-            z-index: 2;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .image-card:hover::before {
-            opacity: 1;
-        }
-
-        .image-card img {
-            width: 100%;
-            height: 200px;
-            border-radius: 20px 20px 0 0;
-            object-fit: cover;
-            display: block;
-            transition: all 0.4s ease;
-            filter: brightness(0.97);
-        }
-
-        .image-card:hover img {
-            transform: scale(1.03);
-            filter: brightness(1);
-        }
-
-        .image-card img[loading="lazy"] {
-            opacity: 0;
-        }
-
-        .image-card img.loaded {
-            opacity: 1;
-            transition: opacity 0.3s ease;
-        }
-
-        .image-info {
-            padding: 15px;
-            text-align: left;
-        }
-
-        .uploader-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3498db, #8e44ad);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .uploader-info p {
-            font-size: 0.95rem;
-            color: #2c3e50;
-            font-weight: 400;
-        }
-
-        .image-title {
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: #1a365d;
-            margin-bottom: 5px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .image-description {
-            font-size: 0.9rem;
-            color: #4b5563;
-            line-height: 1.5;
-            height: 60px;
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-        }
-
-        .loading-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 40px 0;
-            display: none;
-        }
-
-        .loading-bar {
-            width: 200px;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 4px;
-            overflow: hidden;
-            position: relative;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .loading-bar::before {
-            content: '';
-            position: absolute;
-            width: 60px;
-            height: 100%;
-            background: linear-gradient(90deg, #3498db, #8e44ad);
-            border-radius: 4px;
-            animation: slide 1.5s ease-in-out infinite, pulse 2s ease-in-out infinite;
-            box-shadow: 0 0 15px rgba(52, 152, 219, 0.5);
-        }
-
-        .lightbox {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.92);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            animation: fadeIn 0.3s ease-out;
-            backdrop-filter: blur(12px);
-        }
-
-        .lightbox-image {
-            max-width: 90%;
-            max-height: 70%;
-            border-radius: 12px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-            transition: transform 0.3s ease;
-        }
-
-        .lightbox-content {
-            max-width: 700px;
-            text-align: center;
-            padding: 0 20px;
-        }
-
-        .lightbox-info {
-            color: #ffffff;
-            margin: 20px 0;
-            font-size: 1.1rem;
-            font-weight: 400;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-        }
-
-        .lightbox-controls {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .lightbox-btn {
-            background: rgba(255, 255, 255, 0.15);
-            color: #ffffff;
-            padding: 12px 24px;
-            border-radius: 50px;
-            border: none;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .lightbox-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-2px);
-        }
-
-        .lightbox-close {
-            position: absolute;
-            top: 25px;
-            right: 25px;
-            font-size: 2.8rem;
-            color: rgba(255, 255, 255, 0.8);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-
-        .lightbox-close:hover {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.1);
-            transform: scale(1.1);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 0;
-            color: #6b7280;
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            color: #d1d5db;
-        }
-
-        .empty-state h3 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-            color: #4b5563;
-        }
-
-        @keyframes slide {
-            0% { transform: translateX(-100px); }
-            50% { transform: translateX(140px); }
-            100% { transform: translateX(-100px); }
-        }
-
-        @keyframes pulse {
-            0% { opacity: 0.8; transform: scaleY(1); }
-            50% { opacity: 0.5; transform: scaleY(1.5); }
-            100% { opacity: 0.8; transform: scaleY(1); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2.2rem;
-            }
-
-            .header p {
-                font-size: 1rem;
-            }
-
-            .image-grid {
-                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-                gap: 18px;
-            }
-
-            .section {
-                padding: 25px;
-            }
-
-            .image-card img {
-                height: 180px;
-            }
-
-            .image-card {
-                min-height: 320px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .image-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .header h1 {
-                font-size: 1.9rem;
-            }
-
-            .header p {
-                font-size: 0.92rem;
-            }
-
-            .image-card {
-                min-height: 300px;
-            }
-
-            .lightbox-image {
-                max-height: 60%;
-            }
-        }
-    </style>
-</head>
-<body>
-    <a href="dash.html" class="home-icon">
-        <img src="https://img.icons8.com/ios-filled/50/1e3a8a/home.png" alt="Home">
-    </a>
-    <div class="container">
-        <header class="header">
-            <h1>Nepali Image Gallery</h1>
-            <p>Discover the vibrant culture, majestic landscapes, and rich heritage of Nepal through our curated collection</p>
-        </header>
-        
-        <div class="section">
-            <div class="loading-container" id="loadingSpinner">
-                <div class="loading-bar"></div>
-            </div>
-            <div class="image-grid" id="imageGrid"></div>
-        </div>
-    </div>
-    
-    <div class="lightbox" id="lightbox">
-        <span class="lightbox-close" onclick="closeLightbox()">×</span>
-        <div class="lightbox-content">
-            <img class="lightbox-image" id="lightboxImage" alt="Lightbox Image">
-            <div class="lightbox-info" id="lightboxInfo"></div>
-            <div class="lightbox-controls">
-                <button class="lightbox-btn" onclick="closeLightbox()">
-                    <i class="fas fa-times"></i> Close
-                </button>
-            </div>
-        </div>
-    </div>
-    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
             authDomain: "signin-cdeed.firebaseapp.com",
@@ -487,143 +26,379 @@
         const db = getFirestore(app);
 
         // Supabase client initialization
-        const supabaseClient = supabase.createClient(
+        const { createClient } = supabase;
+        const supabaseClient = createClient(
             'https://jxfwqcvdmvepfnrfauoe.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZndxY3ZkbXZlcGZucmZhdW9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NDEzNDEsImV4cCI6MjA2MzAxNzM0MX0.JVZdY8iz_fk2KkiufoYbL49VHtblRq5OhA6pPMonWyY'
         );
 
-        // Lightbox functions
-        window.openLightbox = (src, username, title, description) => {
-            const lightbox = document.getElementById('lightbox');
-            const lightboxImage = document.getElementById('lightboxImage');
-            const lightboxInfo = document.getElementById('lightboxInfo');
-            
-            lightboxImage.src = src;
-            lightboxInfo.innerHTML = `
-                <div style="font-size: 1.4rem; margin-bottom: 8px;">${title}</div>
-                <div>Uploaded by ${username || 'Unknown'}</div>
-                ${description ? `<div style="margin-top: 15px; font-style: italic;">${description}</div>` : ''}
-            `;
-            
-            lightbox.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        };
-
-        window.closeLightbox = () => {
-            document.getElementById('lightbox').style.display = 'none';
-            document.body.style.overflow = 'auto';
-        };
-
         // Load images with uploader info
         window.loadImages = async () => {
             const imageGrid = document.getElementById('imageGrid');
-            const loadingSpinner = document.getElementById('loadingSpinner');
+            imageGrid.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+
+            // Get list of files from Supabase
+            const { data: files, error: listError } = await supabaseClient.storage
+                .from('nepali')
+                .list();
+
+            if (listError) {
+                alert('Error loading images: ' + listError.message);
+                console.error('List error:', listError);
+                return;
+            }
+
+            // Get all image metadata from Firestore
+            const usersSnapshot = await getDocs(collection(db, 'users'));
+            const imageMetadata = [];
+            for (const userDoc of usersSnapshot.docs) {
+                const imagesSnapshot = await getDocs(collection(db, 'users', userDoc.id, 'images'));
+                imagesSnapshot.forEach((doc) => {
+                    imageMetadata.push({ id: doc.id, ...doc.data() });
+                });
+            }
+
+            // Display images
             imageGrid.innerHTML = '';
-            loadingSpinner.style.display = 'flex';
+            for (const file of files) {
+                if (file.name === '.') continue;
+                const { publicUrl } = supabaseClient.storage.from('nepali').getPublicUrl(file.name).data;
+                
+                // Find matching metadata
+                const metadata = imageMetadata.find(meta => meta.filename === file.name) || {};
+                const username = metadata.username || 'Unknown';
 
-            try {
-                // Get list of files from Supabase
-                const { data: files, error: listError } = await supabaseClient.storage
-                    .from('nepali')
-                    .list();
-
-                if (listError) {
-                    throw new Error('Error loading images: ' + listError.message);
-                }
-
-                // Get all image metadata from Firestore
-                const usersSnapshot = await getDocs(collection(db, 'users'));
-                const imageMetadata = [];
-                for (const userDoc of usersSnapshot.docs) {
-                    const imagesSnapshot = await getDocs(collection(db, 'users', userDoc.id, 'images'));
-                    imagesSnapshot.forEach((doc) => {
-                        imageMetadata.push({ id: doc.id, ...doc.data() });
-                    });
-                }
-
-                // Preload first few images
-                const preloadCount = Math.min(3, files.length);
-                for (let i = 0; i < preloadCount; i++) {
-                    if (files[i].name === '.') continue;
-                    const { publicUrl } = supabaseClient.storage.from('nepali').getPublicUrl(files[i].name).data;
-                    const link = document.createElement('link');
-                    link.rel = 'preload';
-                    link.as = 'image';
-                    link.href = publicUrl;
-                    document.head.appendChild(link);
-                }
-
-                // Create fragment to minimize reflows
-                const fragment = document.createDocumentFragment();
-                let hasImages = false;
-
-                for (const file of files) {
-                    if (file.name === '.') continue;
-                    hasImages = true;
-                    const { publicUrl } = supabaseClient.storage.from('nepali').getPublicUrl(file.name).data;
-                    const metadata = imageMetadata.find(meta => meta.filename === file.name) || {};
-                    const username = metadata.username || 'Unknown';
-                    const title = metadata.title || file.name.replace(/\.[^/.]+$/, '');
-                    const description = metadata.description || '';
-
-                    const card = document.createElement('div');
-                    card.className = 'image-card';
-                    card.innerHTML = `
-                        <img src="${publicUrl}" alt="${title}" loading="lazy">
-                        <div class="image-info">
-                            <div class="uploader-info">
-                                <div class="avatar">${username.charAt(0).toUpperCase()}</div>
-                                <p>${username}</p>
-                            </div>
-                            <div class="image-title">${title}</div>
-                            <div class="image-description">${description}</div>
+                const card = document.createElement('div');
+                card.className = 'image-card';
+                card.innerHTML = `
+                    <div class="card-image-container">
+                        <img src="${publicUrl}" alt="${file.name}" loading="lazy">
+                        <div class="image-overlay">
+                            <button class="like-btn"><i class="far fa-heart"></i></button>
+                            <button class="download-btn"><i class="fas fa-download"></i></button>
                         </div>
-                    `;
-                    card.onclick = () => {
-                        window.openLightbox(publicUrl, username, title, description);
-                    };
-                    const img = card.querySelector('img');
-                    if (img.complete) {
-                        img.classList.add('loaded');
-                    } else {
-                        img.onload = () => img.classList.add('loaded');
-                    }
-                    fragment.appendChild(card);
-                }
-
-                if (!hasImages) {
-                    imageGrid.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-image"></i>
-                            <h3>No Images Found</h3>
-                            <p>Upload some images to get started!</p>
+                    </div>
+                    <div class="uploader-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user-circle"></i>
                         </div>
-                    `;
-                } else {
-                    imageGrid.appendChild(fragment);
-                }
-                console.log('Images loaded:', files.length);
-            } catch (error) {
-                imageGrid.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <h3>Error Loading Images</h3>
-                        <p>Please try again later.</p>
+                        <div class="user-details">
+                            <p class="username">${username}</p>
+                            <p class="upload-time">Just now</p>
+                        </div>
                     </div>
                 `;
-                console.error('Error:', error);
-            } finally {
-                loadingSpinner.style.display = 'none';
+                imageGrid.appendChild(card);
             }
+            console.log('Images loaded:', files.length);
         };
-
-        // Close lightbox on Esc key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') window.closeLightbox();
-        });
 
         // Load images when the page loads
         document.addEventListener('DOMContentLoaded', window.loadImages);
     </script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #6366f1;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --bg-light: #f8fafc;
+            --bg-dark: #0f172a;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            overflow-x: hidden;
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .home-icon {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(12px);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            z-index: 1000;
+            color: var(--primary);
+            font-size: 1.5rem;
+            text-decoration: none;
+        }
+
+        .home-icon:hover {
+            transform: translateY(-3px) scale(1.05);
+            background: white;
+            color: var(--primary-light);
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 32px;
+            margin: 40px 0;
+            backdrop-filter: blur(12px);
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h2 {
+            color: var(--text-dark);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            position: relative;
+            display: inline-block;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .image-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .image-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            overflow: hidden;
+        }
+
+        .card-image-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .image-card:hover .card-image-container img {
+            transform: scale(1.05);
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 40%);
+            opacity: 0;
+            transition: var(--transition);
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end;
+            padding: 16px;
+            gap: 10px;
+        }
+
+        .image-card:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .like-btn, .download-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-dark);
+            transition: var(--transition);
+        }
+
+        .like-btn:hover, .download-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .uploader-info {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: white;
+            margin-top: auto;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e7ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .username {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .upload-time {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            grid-column: 1 / -1;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(79, 70, 229, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1024px) {
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .section {
+                padding: 24px;
+                border-radius: 20px;
+            }
+
+            h2 {
+                font-size: 1.75rem;
+            }
+
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .section {
+                padding: 20px;
+                border-radius: 16px;
+                margin: 20px 0;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .image-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .home-icon {
+                width: 44px;
+                height: 44px;
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="dash.html" class="home-icon">
+        <i class="fas fa-home"></i>
+    </a>
+    <div class="container">
+        <div class="section">
+            <h2>Nepali Image Gallery</h2>
+            <div class="image-grid" id="imageGrid"></div>
+        </div>
+    </div>
 </body>
 </html>
+```
