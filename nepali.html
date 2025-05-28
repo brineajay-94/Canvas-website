@@ -3,12 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>nepali Image Gallery</title>
+    <title>Nepali Image Gallery</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ffffff, #e3f2fd);
+            padding: 20px;
+            overflow-x: hidden;
+            color: #1e3a8a;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin: 40px 0;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #4b6cb7;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        .home-icon {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            padding: 12px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.2s ease, background 0.2s ease;
+            z-index: 1000;
+        }
+
+        .home-icon:hover {
+            transform: scale(1.1);
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .home-icon img {
+            width: 28px;
+            height: 28px;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 40px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .image-card {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            will-change: transform, box-shadow;
+            min-height: 320px; /* Prevent layout shift */
+        }
+
+        .image-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .image-card img {
+            width: 100%;
+            height: 200px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            object-fit: cover;
+            display: block;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-card img[loading="lazy"] {
+            opacity: 0;
+        }
+
+        .image-card img.loaded {
+            opacity: 1;
+        }
+
+        .uploader-info p {
+            font-size: 0.9rem;
+            color: #1e3a8a;
+            font-weight: 400;
+            margin-bottom: 12px;
+        }
+
+        .download-btn {
+            background: #2196f3;
+            color: #ffffff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .download-btn:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .download-btn i {
+            font-size: 1rem;
+        }
+
+        .loading-spinner {
+            border: 5px solid rgba(255, 255, 255, 0.4);
+            border-top: 5px solid #2196f3;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+            display: none;
+        }
+
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease-out;
+            backdrop-filter: blur(10px);
+        }
+
+        .lightbox-image {
+            max-width: 90%;
+            max-height: 70%;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .lightbox-info {
+            color: #ffffff;
+            margin: 16px 0;
+            font-size: 1rem;
+            font-weight: 400;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .lightbox-download {
+            background: #2196f3;
+            color: #ffffff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .lightbox-download:hover {
+            background: #1976d2;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2.5rem;
+            color: #ffffff;
+            cursor: pointer;
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+
+        .lightbox-close:hover {
+            color: #ff5252;
+            transform: scale(1.1);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .image-grid {
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .image-card img {
+                height: 180px;
+            }
+
+            .image-card {
+                min-height: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .image-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .header p {
+                font-size: 0.9rem;
+            }
+
+            .image-card img {
+                height: 200px;
+            }
+
+            .image-card {
+                min-height: 280px;
+            }
+
+            .lightbox-image {
+                max-height: 60%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="dash.html" class="home-icon">
+        <img src="https://img.icons8.com/ios-filled/50/1e3a8a/home.png" alt="Home">
+    </a>
+    <div class="container">
+        <header class="header">
+            <h1>Nepali Image Gallery</h1>
+            <p>Discover the vibrant culture and landscapes of Nepal</p>
+        </header>
+        <div class="section">
+            <div class="loading-spinner" id="loadingSpinner"></div>
+            <div class="image-grid" id="imageGrid"></div>
+        </div>
+    </div>
+    <div class="lightbox" id="lightbox">
+        <span class="lightbox-close" onclick="closeLightbox()">×</span>
+        <img class="lightbox-image" id="lightboxImage" alt="Lightbox Image">
+        <div class="lightbox-info" id="lightboxInfo"></div>
+        <button class="lightbox-download" id="lightboxDownload"><i class="fas fa-download"></i> Download</button>
+    </div>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
 
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
             authDomain: "signin-cdeed.firebaseapp.com",
@@ -23,184 +345,123 @@
         const db = getFirestore(app);
 
         // Supabase client initialization
-        const { createClient } = supabase;
-        const supabaseClient = createClient(
+        const supabaseClient = supabase.createClient(
             'https://jxfwqcvdmvepfnrfauoe.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZndxY3ZkbXZlcGZucmZhdW9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NDEzNDEsImV4cCI6MjA2MzAxNzM0MX0.JVZdY8iz_fk2KkiufoYbL49VHtblRq5OhA6pPMonWyY'
         );
 
+        // Download function (global scope)
+        window.downloadImage = async (url, filename) => {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to fetch image');
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename || 'image';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            } catch (error) {
+                alert('Failed to download image. Please try again.');
+                console.error('Download error:', error);
+            }
+        };
+
+        // Lightbox functions
+        window.openLightbox = (src, username, filename) => {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImage = document.getElementById('lightboxImage');
+            const lightboxInfo = document.getElementById('lightboxInfo');
+            const lightboxDownload = document.getElementById('lightboxDownload');
+            lightboxImage.src = src;
+            lightboxInfo.textContent = `Uploaded by ${username || 'Unknown'}`;
+            lightboxDownload.onclick = () => window.downloadImage(src, filename);
+            lightbox.style.display = 'flex';
+        };
+
+        window.closeLightbox = () => {
+            document.getElementById('lightbox').style.display = 'none';
+        };
+
         // Load images with uploader info
         window.loadImages = async () => {
             const imageGrid = document.getElementById('imageGrid');
+            const loadingSpinner = document.getElementById('loadingSpinner');
             imageGrid.innerHTML = '';
+            loadingSpinner.style.display = 'block';
 
-            // Get list of files from Supabase
-            const { data: files, error: listError } = await supabaseClient.storage
-                .from('nepali')
-                .list();
+            try {
+                // Get list of files from Supabase
+                const { data: files, error: listError } = await supabaseClient.storage
+                    .from('nepali')
+                    .list();
 
-            if (listError) {
-                alert('Error loading images: ' + listError.message);
-                console.error('List error:', listError);
-                return;
+                if (listError) {
+                    throw new Error('Error loading images: ' + listError.message);
+                }
+
+                // Get all image metadata from Firestore
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                const imageMetadata = [];
+                for (const userDoc of usersSnapshot.docs) {
+                    const imagesSnapshot = await getDocs(collection(db, 'users', userDoc.id, 'images'));
+                    imagesSnapshot.forEach((doc) => {
+                        imageMetadata.push({ id: doc.id, ...doc.data() });
+                    });
+                }
+
+                // Create fragment to minimize reflows
+                const fragment = document.createDocumentFragment();
+                for (const file of files) {
+                    if (file.name === '.') continue;
+                    const { publicUrl } = supabaseClient.storage.from('nepali').getPublicUrl(file.name).data;
+                    const metadata = imageMetadata.find(meta => meta.filename === file.name) || {};
+                    const username = metadata.username || 'Unknown';
+
+                    const card = document.createElement('div');
+                    card.className = 'image-card';
+                    card.innerHTML = `
+                        <img src="${publicUrl}" alt="${file.name} uploaded by ${username}" loading="lazy">
+                        <div class="uploader-info">
+                            <p>Uploaded by ${username}</p>
+                        </div>
+                        <button class="download-btn" onclick="window.downloadImage('${publicUrl}', '${file.name}')">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    `;
+                    card.onclick = (e) => {
+                        if (e.target.tagName !== 'BUTTON' && !e.target.closest('.download-btn')) {
+                            window.openLightbox(publicUrl, username, file.name);
+                        }
+                    };
+                    // Add loaded class when image loads
+                    const img = card.querySelector('img');
+                    if (img.complete) {
+                        img.classList.add('loaded');
+                    } else {
+                        img.onload = () => img.classList.add('loaded');
+                    }
+                    fragment.appendChild(card);
+                }
+                imageGrid.appendChild(fragment);
+                console.log('Images loaded:', files.length);
+            } catch (error) {
+                alert('Failed to load images. Please try again later.');
+                console.error('Error:', error);
+            } finally {
+                loadingSpinner.style.display = 'none';
             }
-
-            // Get all image metadata from Firestore
-            const usersSnapshot = await getDocs(collection(db, 'users'));
-            const imageMetadata = [];
-            for (const userDoc of usersSnapshot.docs) {
-                const imagesSnapshot = await getDocs(collection(db, 'users', userDoc.id, 'images'));
-                imagesSnapshot.forEach((doc) => {
-                    imageMetadata.push({ id: doc.id, ...doc.data() });
-                });
-            }
-
-            // Display images
-            for (const file of files) {
-                if (file.name === '.') continue;
-                const { publicUrl } = supabaseClient.storage.from('nepali').getPublicUrl(file.name).data;
-                
-                // Find matching metadata
-                const metadata = imageMetadata.find(meta => meta.filename === file.name) || {};
-                const username = metadata.username || 'Unknown';
-
-                const card = document.createElement('div');
-                card.className = 'image-card';
-                card.innerHTML = `
-                    <img src="${publicUrl}" alt="${file.name}">
-                    <div class="uploader-info">
-                        <p>Uploaded by ${username}</p>
-                    </div>
-                `;
-                imageGrid.appendChild(card);
-            }
-            console.log('Images loaded:', files.length);
         };
+
+        // Close lightbox on Esc key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') window.closeLightbox();
+        });
 
         // Load images when the page loads
         document.addEventListener('DOMContentLoaded', window.loadImages);
     </script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-
-        body {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #e0e7ff, #c3cfe2);
-            padding: 20px;
-            overflow-x: hidden;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .home-icon {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.25);
-            border-radius: 12px;
-            padding: 12px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
-            z-index: 1000;
-        }
-
-        .home-icon:hover {
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.35);
-        }
-
-        .home-icon img {
-            width: 28px;
-            height: 28px;
-        }
-
-        .section {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 24px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-        }
-
-        h2 {
-            color: #1f2937;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-
-        .image-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-        }
-
-        .image-card {
-            background: rgba(255, 255, 255, 0.25);
-            border-radius: 16px;
-            padding: 16px;
-            text-align: center;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .image-card:hover {
-            transform: translateY(-4px);
-        }
-
-        .image-card img {
-            max-width: 100%;
-            border-radius: 10px;
-            margin-bottom: 12px;
-        }
-
-        .uploader-info {
-            margin-bottom: 12px;
-        }
-
-        .uploader-info p {
-            font-size: 0.85rem;
-            color: #1f2937;
-        }
-
-        @media (max-width: 768px) {
-            .section {
-                padding: 16px;
-            }
-
-            .image-grid {
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            }
-        }
-
-        @media (max-width: 480px) {
-            .image-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
-</head>
-<body>
-    <a href="dash.html" class="home-icon">
-        <img src="https://img.icons8.com/ios-filled/50/000000/home.png" alt="Home">
-    </a>
-    <div class="container">
-        <div class="section">
-            <h2>nepali Image Gallery</h2>
-            <div class="image-grid" id="imageGrid"></div>
-        </div>
-    </div>
 </body>
 </html>
