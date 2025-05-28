@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f8f3;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #1c2a44;
+      color: white;
+      padding: 15px;
+      border-radius: 0 0 30px 30px;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .profile img {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin-right: 10px;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .login-text {
+      color: #66bb6a;
+      font-size: 14px;
+    }
+
+    .notification {
+      color: white;
+      cursor: pointer;
+    }
+
+    .search-bar {
+      display: flex;
+      justify-content: center;
+      margin: 15px;
+    }
+
+    .search-bar input {
+      width: 80%;
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+
+    .section {
+      background: white;
+      margin: 20px;
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .section h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+
+    .box {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+    }
+
+    .box i {
+      font-size: 40px;
+    }
+
+    .box p {
+      margin-top: 5px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="profile" onclick="location.href='profile1.html'">
+    <img id="profileImage" src="profile.png" alt="Profile">
+    <div id="welcomeMessage">
+      <p>Welcome Guest</p>
+      <span class="login-text">Please Login</span>
+    </div>
+  </div>
+  <div class="notification" onclick="location.href='notifications.html'">
+    <i class="fas fa-bell"></i>
+  </div>
+</div>
+
+<div class="search-bar">
+  <input type="text" placeholder="Search...">
+</div>
+
+<div class="section">
+  <h2>Subjects</h2>
+  <div class="grid">
+    <div class="box" onclick="location.href='nepali.html'">
+      <i class="fa-solid fa-book"></i>
+      <p>Nepali</p>
+    </div>
+    <div class="box" onclick="location.href='math.html'">
+      <i class="fa-solid fa-book"></i>
+      <p>Business Math</p>
+    </div>
+    <div class="box" onclick="location.href='social.html'">
+      <i class="fa-solid fa-book"></i>
+      <p>Social</p>
+    </div>
+    <div class="box" onclick="location.href='economics.html'">
+      <i class="fa-solid fa-book"></i>
+      <p>Economics</p>
+    </div>
+    <div class="box" onclick="location.href='english.html'">
+      <i class="fas fa-book"></i>
+      <p>English</p>
+    </div>
+    <div class="box" onclick="location.href='account.html'">
+      <i class="fas fa-book"></i>
+      <p>Account</p>
+    </div>
+    <div class="box" onclick="location.href='notes.html'">
+      <i class="fa-solid fa-book-open"></i>
+      <p>Share your Notes</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Entertainment</h2>
+  <div class="grid">
+    <div class="box" onclick="location.href='movies.html'">
+      <i class="fa-solid fa-video"></i>
+      <p>Movies</p>
+    </div>
+    <div class="box" onclick="location.href='youtube.html'">
+      <i class="fa-brands fa-youtube"></i>
+      <p>YouTube</p>
+    </div>
+    <div class="box" onclick="location.href='gallery.html'">
+      <i class="fas fa-solid fa-image"></i>
+      <p>Gallery</p>
+    </div>
+    <div class="box" onclick="location.href='notice.html'">
+      <i class="fas fa-clipboard-list"></i>
+      <p>Notice Board</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Tools</h2>
+  <div class="grid">
+    <div class="box" onclick="location.href='calculator.html'">
+      <i class="fa-solid fa-calculator"></i>
+      <p>Calculator</p>
+    </div>
+    <div class="box" onclick="location.href='chat.html'">
+      <i class="fas fa-comments"></i>
+      <p>Chat</p>
+    </div>
+    <div class="box" onclick="location.href='people.html'">
+      <i class="fa-solid fa-user"></i>
+      <p>Peoples</p>
+    </div>
+    <div class="box" onclick="location.href='other.html'">
+      <i class="fa-solid fa-globe"></i>
+      <p>Others</p>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK & Firestore Script -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-analytics.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
+  import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
+    authDomain: "signin-cdeed.firebaseapp.com",
+    projectId: "signin-cdeed",
+    storageBucket: "signin-cdeed.firebasestorage.app",
+    messagingSenderId: "481847681739",
+    appId: "1:481847681739:web:13b28ef686bc29f201714e",
+    measurementId: "G-L8F15D37BE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  const welcomeMessage = document.getElementById('welcomeMessage');
+  const profileImage = document.getElementById('profileImage');
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      try {
+        // Fetch user data from Firestore
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const username = userData.username || "User";
+          const photoUrl = userData.profilePicUrl || "profile.png";
+          welcomeMessage.innerHTML = `<p>Welcome ${username}</p>`;
+          profileImage.src = photoUrl;
+        } else {
+          console.error('User document not found in Firestore');
+          welcomeMessage.innerHTML = `<p>Welcome User</p>`;
+          profileImage.src = "profile.png";
+        }
+      } catch (error) {
+        console.error('Error fetching user data from Firestore:', error);
+        welcomeMessage.innerHTML = `<p>Welcome User</p>`;
+        profileImage.src = "profile.png";
+      }
+    } else {
+      welcomeMessage.innerHTML = `<p>Welcome Guest</p><span class="login-text">Please Login</span>`;
+      profileImage.src = "profile.png";
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Welcome App created by Ajay Kafle" />
+    <meta name="keywords" content="Welcome, App, Ajay Kafle" />
+    <title>Welcome App by Ajay Kafle</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+
+        /* Reset and base */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            font-family: 'Poppins', sans-serif;
+            background: #000;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        /* Background video */
+        #bg-video {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -1;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            filter: brightness(0.45) contrast(1.1);
+        }
+
+        /* Overlay to enhance contrast */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 0;
+        }
+
+        /* Gradient overlay */
+        .gradient-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7));
+            z-index: 1;
+        }
+
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: white;
+            text-align: center;
+            padding: 1rem 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Welcome text */
+        .welcome-text {
+            font-size: 1.2rem;
+            letter-spacing: 0.04em;
+            text-shadow:
+                0 0 8px rgba(255, 255, 255, 0.3),
+                0 0 10px rgba(255, 255, 255, 0.2);
+            margin-bottom: 1.8rem;
+            opacity: 0;
+            animation: fadeInUp 1.4s ease forwards;
+            transition: transform 0.3s ease;
+        }
+
+        .welcome-text:hover {
+            transform: scale(1.05);
+        }
+
+        /* "lets go" card */
+        .lets-go-card {
+            position: relative;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.55rem 2.8rem;
+            border-radius: 16px;
+            color: #e0f7ff;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow:
+                0 0 8px rgba(0, 255, 255, 0.05),
+                inset 0 0 12px rgba(0, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            user-select: none;
+            opacity: 0;
+            animation: fadeInUp 1.6s ease forwards;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        .lets-go-card:hover {
+            color: #75f5ff;
+            transform: scale(1.1);
+        }
+
+        /* Glowing border animation */
+        .lets-go-card::before {
+            content: "";
+            position: absolute;
+            top: -3px; left: -3px; right: -3px; bottom: -3px;
+            border-radius: 20px;
+            padding: 2px;
+            background: linear-gradient(270deg, #00ffff, #0077ff, #00ffff, #00ffef, #0077ff);
+            background-size: 1000% 1000%;
+            animation: glowingLine 5s linear infinite;
+            -webkit-mask:
+                linear-gradient(#fff 0 0) content-box, 
+                linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            z-index: -1;
+        }
+
+        /* Animations */
+        @keyframes glowingLine {
+            0% {
+                background-position: 0% 50%;
+            }
+            100% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Loading Spinner */
+        #loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3;
+        }
+
+        .spinner {
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-top: 8px solid #fff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        footer {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #e0f7ff;
+            font-size: 0.8rem;
+            z-index: 2;
+        }
+
+        /* Responsive font scaling */
+        @media (max-width: 450px) {
+            .welcome-text {
+                font-size: 0.75rem;
+                margin-bottom: 1.4rem;
+            }
+            .lets-go-card {
+                font-size: 0.9rem;
+                padding: 0.5rem 2rem;
+                border-radius: 14px;
+            }
+        }
+
+        /* Stars */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none; /* Prevent interaction */
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="stars"></div>
+
+    <video id="bg-video" autoplay muted loop playsinline aria-label="Background video">
+        <source src="https://cdn.videvo.net/videvo_files/video/free/2017-07/small_watermarked/170628_A_016_preview.webm" type="video/webm" />
+        <source src="https://cdn.videvo.net/videvo_files/video/free/2017-07/small_watermarked/170628_A_016_preview.mp4" type="video/mp4" />
+        Sorry, your browser does not support the video tag.
+    </video>
+
+    <div class="gradient-overlay"></div>
+
+    <div class="container" role="main" aria-label="Welcome message and navigation">
+        <div class="welcome-text" aria-live="polite">Welcome to an app created by Ajay Kafle</div>
+        <a href="login.html" class="lets-go-card" role="button" tabindex="0" aria-label="Proceed to login page">lets go</a>
+    </div>
+
+    <footer>
+        &copy; 2025 Ajay Kafle. All rights reserved.
+    </footer>
+
+    <script>
+        const video = document.getElementById('bg-video');
+        const spinner = document.getElementById('loading-spinner');
+
+        // Show spinner when video starts loading
+        video.addEventListener('loadstart', () => {
+            spinner.style.display = 'block';
+        });
+
+        // Hide spinner when video data is loaded
+        video.addEventListener('loadeddata', () => {
+            spinner.style.display = 'none';
+        });
+
+        // Optional: Hide spinner if video fails to load
+        video.addEventListener('error', () => {
+            spinner.style.display = 'none';
+        });
+
+        // Pause video on hover
+        video.addEventListener('mouseover', () => {
+            video.pause();
+        });
+
+        video.addEventListener('mouseout', () => {
+            video.play();
+        });
+
+        // Star animation code
+        const starsContainer = document.querySelector('.stars');
+
+        function createStar() {
+            const star = document.createElement('div');
+            star.className = 'star';
+            const size = Math.random() * 5 + 2; // Random size between 2 and 7
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.left = `${Math.random() * 100}vw`; // Random horizontal position
+            star.style.animationDuration = `${Math.random() * 2 + 3}s`; // Random fall duration
+            starsContainer.appendChild(star);
+
+            // Remove star after animation ends
+            star.addEventListener('animationend', () => {
+                star.remove();
+            });
+        }
+
+        // Create stars at intervals
+        setInterval(createStar, 300);
+    </script>
+</body>
+</html>

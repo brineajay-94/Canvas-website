@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ChatSphere - Chat</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background-color: #f4f7fc;
+      color: #1a1a1a;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.dark-mode {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, #2a3f8f, #1c2a44);
+      color: white;
+      padding: 15px 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .profile img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #ffffff33;
+      transition: transform 0.3s;
+    }
+
+    .profile img:hover {
+      transform: scale(1.1);
+    }
+
+    .profile span {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .theme-toggle:hover {
+      transform: rotate(20deg);
+    }
+
+    .chat-container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .chat-header img {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #e0e0e033;
+    }
+
+    .chat-header span {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2a3f8f;
+    }
+
+    body.dark-mode .chat-header span {
+      color: #6b82ff;
+    }
+
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #ccc;
+      transition: background-color 0.3s;
+    }
+
+    .status-indicator.online {
+      background-color: #28a745;
+    }
+
+    .chat-messages {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      max-height: 60vh;
+      overflow-y: auto;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
+
+    body.dark-mode .chat-messages {
+      background: #2a2a2a;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .message {
+      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .message.sent {
+      align-items: flex-end;
+    }
+
+    .message.received {
+      align-items: flex-start;
+    }
+
+    .message-text {
+      max-width: 70%;
+      padding: 10px 15px;
+      border-radius: 12px;
+      font-size: 1rem;
+    }
+
+    .message.sent .message-text {
+      background: #2a3f8f;
+      color: white;
+    }
+
+    .message.received .message-text {
+      background: #e0e0e0;
+      color: #1a1a1a;
+    }
+
+    body.dark-mode .message.received .message-text {
+      background: #3a3a3a;
+      color: #e0e0e0;
+    }
+
+    .message-timestamp {
+      font-size: 0.8rem;
+      color: #999;
+    }
+
+    body.dark-mode .message-timestamp {
+      color: #b0b0b0;
+    }
+
+    .chat-input {
+      display: flex;
+      gap: 10px;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    body.dark-mode .chat-input {
+      background: #2a2a2a;
+    }
+
+    .chat-input input {
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      width: 100%;
+      background: transparent;
+      color: #1a1a1a;
+    }
+
+    body.dark-mode .chat-input input {
+      color: #e0e0e0;
+    }
+
+    .chat-input input::placeholder {
+      color: #999;
+    }
+
+    .chat-input button {
+      background: #2a3f8f;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.3s;
+    }
+
+    .chat-input button:hover {
+      background: #1c2a44;
+    }
+
+    .error-message {
+      color: #d32f2f;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    body.dark-mode .error-message {
+      color: #ef5350;
+    }
+
+    .skeleton-loader {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      animation: pulse 1.5s infinite;
+    }
+
+    body.dark-mode .skeleton-loader {
+      background: #2a2a2a;
+    }
+
+    .skeleton-loader .skeleton-text {
+      width: 70%;
+      height: 20px;
+      background: #e0e0e0;
+      border-radius: 8px;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    @media (max-width: 600px) {
+      .header {
+        padding: 10px 15px;
+      }
+
+      .profile img {
+        width: 40px;
+        height: 40px;
+      }
+
+      .profile span {
+        font-size: 1rem;
+      }
+
+      .chat-container {
+        padding: 0 15px;
+      }
+
+      .chat-header img {
+        width: 36px;
+        height: 36px;
+      }
+
+      .chat-header span {
+        font-size: 1.3rem;
+      }
+
+      .chat-messages {
+        padding: 12px;
+      }
+
+      .chat-input {
+        padding: 8px;
+      }
+
+      .chat-input button {
+        padding: 8px 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="profile">
+      <img id="profileImage" src="profile.png" alt="Profile" aria-label="User profile picture">
+      <span id="username">Loading...</span>
+    </div>
+    <button class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+  </div>
+
+  <div class="chat-container">
+    <div class="chat-header">
+      <img id="otherUserImage" src="profile.png" alt="Other user profile picture">
+      <span id="otherUsername">Loading...</span>
+      <div class="status-indicator" id="otherUserStatus" title="Offline"></div>
+    </div>
+    <div id="errorMessage" class="error-message" style="display: none;"></div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="skeleton-loader">
+        <div class="skeleton-text"></div>
+        <div class="skeleton-text"></div>
+      </div>
+    </div>
+    <div class="chat-input">
+      <input type="text" id="messageInput" placeholder="Type a message..." aria-label="Type a message">
+      <button id="sendButton">Send</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+    import { getDatabase, ref, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
+      authDomain: "signin-cdeed.firebaseapp.com",
+      projectId: "signin-cdeed",
+      storageBucket: "signin-cdeed.appspot.com",
+      messagingSenderId: "481847681739",
+      appId: "1:481847681739:web:13b28ef686bc29f201714e",
+      databaseURL: "https://signin-cdeed-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const rtdb = getDatabase(app);
+
+    const profileImage = document.getElementById('profileImage');
+    const usernameSpan = document.getElementById('username');
+    const otherUserImage = document.getElementById('otherUserImage');
+    const otherUsernameSpan = document.getElementById('otherUsername');
+    const otherUserStatus = document.getElementById('otherUserStatus');
+    const chatMessages = document.getElementById('chatMessages');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const errorMessage = document.getElementById('errorMessage');
+
+    let currentUserId = null;
+    let otherUserId = null;
+
+    // Get other user ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    otherUserId = urlParams.get('uid');
+
+    // Theme toggle functionality
+    const themeToggle = document.querySelector('.theme-toggle');
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    });
+
+    // Load saved theme
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      themeToggle.textContent = '☀️';
+    }
+
+    // Format timestamp
+    const formatTimestamp = (timestamp) => {
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    // Render messages
+    const renderMessages = (messages) => {
+      chatMessages.innerHTML = '';
+      messages.forEach(msg => {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${msg.senderId === currentUserId ? 'sent' : 'received'}`;
+        messageDiv.innerHTML = `
+          <div class="message-text">${msg.text}</div>
+          <div class="message-timestamp">${formatTimestamp(msg.timestamp)}</div>
+        `;
+        chatMessages.appendChild(messageDiv);
+      });
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+
+    // Send message
+    sendButton.addEventListener('click', async () => {
+      const text = messageInput.value.trim();
+      if (!text) return;
+
+      const chatId = [currentUserId, otherUserId].sort().join('_');
+      try {
+        await addDoc(collection(db, `chats/chat_${chatId}/messages`), {
+          senderId: currentUserId,
+          text,
+          timestamp: Date.now()
+        });
+        messageInput.value = '';
+      } catch (error) {
+        console.error('Failed to send message:', error.message);
+        errorMessage.textContent = 'Error sending message: ' + error.message;
+        errorMessage.style.display = 'block';
+      }
+    });
+
+    // Allow sending message with Enter key
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        sendButton.click();
+      }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUserId = user.uid;
+
+        // Save or update user data in Firestore
+        const userDocRef = doc(db, 'users', user.uid);
+        try {
+          const userDoc = await getDoc(userDocRef);
+          if (!userDoc.exists()) {
+            // Create new user document with default values
+            await setDoc(userDocRef, {
+              username: user.displayName || `User_${user.uid.slice(0, 8)}`,
+              profilePicUrl: 'profile.png',
+              email: user.email || '',
+              createdAt: Date.now()
+            });
+          } else {
+            // Update existing document to ensure username and profilePicUrl are set
+            const data = userDoc.data();
+            await setDoc(userDocRef, {
+              username: data.username || user.displayName || `User_${user.uid.slice(0, 8)}`,
+              profilePicUrl: data.profilePicUrl || 'profile.png',
+              email: user.email || data.email || '',
+              updatedAt: Date.now()
+            }, { merge: true });
+          }
+        } catch (error) {
+          console.error('Error saving user data to Firestore:', error.message);
+          errorMessage.textContent = 'Error saving user data: ' + error.message;
+          errorMessage.style.display = 'block';
+        }
+
+        // Set user online status
+        const statusRef = ref(rtdb, `status/${currentUserId}`);
+        await set(statusRef, {
+          state: 'online',
+          last_changed: Date.now()
+        });
+
+        // Set user offline when they disconnect
+        onDisconnect(statusRef).set({
+          state: 'offline',
+          last_changed: Date.now()
+        }).catch(error => {
+          console.error('Failed to set onDisconnect:', error.message);
+        });
+
+        // Load current user profile
+        try {
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            usernameSpan.textContent = data.username || 'User';
+            profileImage.src = data.profilePicUrl || 'profile.png';
+          } else {
+            usernameSpan.textContent = 'User';
+          }
+        } catch (error) {
+          console.error('Failed to fetch user profile:', error.message);
+          errorMessage.textContent = 'Error fetching user profile: ' + error.message;
+          errorMessage.style.display = 'block';
+        }
+
+        // Load other user profile
+        if (otherUserId) {
+          const otherUserDocRef = doc(db, 'users', otherUserId);
+          try {
+            const otherUserDoc = await getDoc(otherUserDocRef);
+            if (otherUserDoc.exists()) {
+              const data = otherUserDoc.data();
+              otherUsernameSpan.textContent = data.username || 'Unnamed User';
+              otherUserImage.src = data.profilePicUrl || 'profile.png';
+            } else {
+              otherUsernameSpan.textContent = 'Unnamed User';
+            }
+          } catch (error) {
+            console.error('Failed to fetch other user profile:', error.message);
+            errorMessage.textContent = 'Error fetching user profile: ' + error.message;
+            errorMessage.style.display = 'block';
+          }
+
+          // Monitor other user status
+          const otherStatusRef = ref(rtdb, `status/${otherUserId}`);
+          onValue(otherStatusRef, (snapshot) => {
+            const status = snapshot.val();
+            const isOnline = status && status.state === 'online';
+            otherUserStatus.className = `status-indicator ${isOnline ? 'online' : ''}`;
+            otherUserStatus.title = isOnline ? 'Online' : 'Offline';
+          }, (error) => {
+            console.error(`Failed to read status for ${otherUserId}:`, error.message);
+            errorMessage.textContent = 'Error fetching user status: ' + error.message;
+            errorMessage.style.display = 'block';
+          });
+
+          // Load chat messages
+          const chatId = [currentUserId, otherUserId].sort().join('_');
+          const messagesQuery = query(
+            collection(db, `chats/chat_${chatId}/messages`),
+            orderBy('timestamp', 'asc')
+          );
+          onSnapshot(messagesQuery, (snapshot) => {
+            const messages = [];
+            snapshot.forEach(doc => {
+              messages.push(doc.data());
+            });
+            renderMessages(messages);
+          }, (error) => {
+            console.error('Failed to fetch messages:', error.message);
+            errorMessage.textContent = 'Error fetching messages: ' + error.message;
+            errorMessage.style.display = 'block';
+          });
+        } else {
+          errorMessage.textContent = 'Invalid user ID in URL';
+          errorMessage.style.display = 'block';
+        }
+      } else {
+        alert('You are not logged in!');
+        window.location.href = 'login.html';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watch Videos</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #e9ecef;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 8px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header a {
+            text-decoration: none;
+            color: white;
+            font-size: 20px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            background-color: #0056b3;
+            transition: background-color 0.3s;
+        }
+
+        .header a:hover {
+            background-color: #004494;
+        }
+
+        .video-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .video-item {
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .video-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .video-frame {
+            width: 100%;
+            height: 400px; /* Adjusted for consistency */
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .video-frame {
+                height: 200px; /* Adjusted for mobile */
+            }
+        }
+    </style>
+    <script type="module">
+        // Import Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAanJ9JJ7wNfha2vX2k0slZF6qcfxNERj0",
+            authDomain: "canvas-55c31.firebaseapp.com",
+            projectId: "canvas-55c31",
+            storageBucket: "canvas-55c31.appspot.com",
+            messagingSenderId: "744324241059",
+            appId: "1:744324241059:web:4914e76d1436bcfc659116",
+            measurementId: "G-NTK4L0L5P8"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Function to load videos with embedded previews
+        async function loadVideos() {
+            const videoContainer = document.getElementById("videoList");
+            videoContainer.innerHTML = "";
+
+            const querySnapshot = await getDocs(collection(db, "videos"));
+            querySnapshot.forEach((docSnapshot) => {
+                const videoData = docSnapshot.data();
+                const videoId = videoData.videoId;
+
+                // Create video preview item
+                const videoElement = document.createElement("div");
+                videoElement.classList.add("video-item");
+                videoElement.innerHTML = `
+                    <iframe class="video-frame" src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>
+                `;
+                videoContainer.appendChild(videoElement);
+            });
+        }
+
+        // Load videos on page load
+        window.onload = loadVideos;
+    </script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Watch Videos</h1>
+            <a href="dash.html"><i class="fas fa-home"></i> Home</a>
+        </div>
+        <div class="video-list" id="videoList"></div>
+    </div>
+    <!-- Font Awesome for home icon -->
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+</body>
+</html>

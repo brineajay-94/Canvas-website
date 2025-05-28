@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ChatSphere</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background-color: #f4f7fc;
+      color: #1a1a1a;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.dark-mode {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(135deg, #2a3f8f, #1c2a44);
+      color: white;
+      padding: 15px 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .profile img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #ffffff33;
+      transition: transform 0.3s;
+    }
+
+    .profile img:hover {
+      transform: scale(1.1);
+    }
+
+    .profile span {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .theme-toggle:hover {
+      transform: rotate(20deg);
+    }
+
+    .user-list {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 20px;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    body.dark-mode .search-bar {
+      background: #2a2a2a;
+    }
+
+    .search-bar input {
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      width: 100%;
+      background: transparent;
+      color: #1a1a1a;
+    }
+
+    body.dark-mode .search-bar input {
+      color: #e0e0e0;
+    }
+
+    .search-bar input::placeholder {
+      color: #999;
+    }
+
+    .user-list h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #2a3f8f;
+    }
+
+    body.dark-mode .user-list h3 {
+      color: #6b82ff;
+    }
+
+    .user {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    body.dark-mode .user {
+      background: #2a2a2a;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .user:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .user img {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #e0e0e033;
+    }
+
+    .user span {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-left: auto;
+      background-color: #ccc;
+      transition: background-color 0.3s;
+    }
+
+    .status-indicator.online {
+      background-color: #28a745;
+    }
+
+    .skeleton-loader {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      animation: pulse 1.5s infinite;
+    }
+
+    body.dark-mode .skeleton-loader {
+      background: #2a2a2a;
+    }
+
+    .skeleton-loader .skeleton-img {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #e0e0e0;
+    }
+
+    .skeleton-loader .skeleton-text {
+      width: 150px;
+      height: 16px;
+      background: #e0e0e0;
+      border-radius: 4px;
+    }
+
+    .error-message {
+      color: #d32f2f;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    body.dark-mode .error-message {
+      color: #ef5350;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    @media (max-width: 600px) {
+      .header {
+        padding: 10px 15px;
+      }
+
+      .profile img {
+        width: 40px;
+        height: 40px;
+      }
+
+      .profile span {
+        font-size: 1rem;
+      }
+
+      .user-list {
+        padding: 0 15px;
+      }
+
+      .search-bar {
+        padding: 8px;
+      }
+
+      .user {
+        padding: 12px;
+      }
+
+      .user img {
+        width: 36px;
+        height: 36px;
+      }
+
+      .user span {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="profile">
+      <img id="profileImage" src="profile.png" alt="Profile" aria-label="User profile picture">
+      <span id="username">Loading...</span>
+    </div>
+    <button class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
+  </div>
+
+  <div class="user-list" id="userList">
+    <h3>Chat with others</h3>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search users..." aria-label="Search users by username">
+    </div>
+    <div id="errorMessage" class="error-message" style="display: none;"></div>
+    <div class="skeleton-loader">
+      <div class="skeleton-img"></div>
+      <div class="skeleton-text"></div>
+    </div>
+    <div class="skeleton-loader">
+      <div class="skeleton-img"></div>
+      <div class="skeleton-text"></div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
+    import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+    import { getDatabase, ref, set, onValue, onDisconnect, get } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
+      authDomain: "signin-cdeed.firebaseapp.com",
+      projectId: "signin-cdeed",
+      storageBucket: "signin-cdeed.appspot.com",
+      messagingSenderId: "481847681739",
+      appId: "1:481847681739:web:13b28ef686bc29f201714e",
+      databaseURL: "https://signin-cdeed-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const rtdb = getDatabase(app);
+
+    const profileImage = document.getElementById('profileImage');
+    const usernameSpan = document.getElementById('username');
+    const userList = document.getElementById('userList');
+    const searchInput = document.getElementById('searchInput');
+    const errorMessage = document.getElementById('errorMessage');
+
+    let currentUserId = null;
+    let allUsers = [];
+
+    // Check Realtime Database connectivity
+    const checkDatabaseConnection = async () => {
+      try {
+        const testRef = ref(rtdb, '.info/connected');
+        onValue(testRef, (snapshot) => {
+          if (snapshot.val() === true) {
+            console.log('Connected to Realtime Database');
+            errorMessage.style.display = 'none';
+          } else {
+            console.warn('Disconnected from Realtime Database');
+            errorMessage.textContent = 'Unable to connect to status updates. Please check your network.';
+            errorMessage.style.display = 'block';
+          }
+        });
+      } catch (error) {
+        console.error('Database connection error:', error.message);
+        errorMessage.textContent = 'Error connecting to status updates: ' + error.message;
+        errorMessage.style.display = 'block';
+      }
+    };
+
+    // Theme toggle functionality
+    const themeToggle = document.querySelector('.theme-toggle');
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+    });
+
+    // Load saved theme
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark-mode');
+      themeToggle.textContent = '☀️';
+    }
+
+    // Keyboard accessibility for user list
+    const focusUser = (userDiv) => {
+      userDiv.setAttribute('tabindex', '0');
+      userDiv.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          userDiv.click();
+        }
+      });
+    };
+
+    // Search functionality
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.toLowerCase();
+      renderUsers(allUsers.filter(user => user.username.toLowerCase().includes(query)));
+    });
+
+    // Render users
+    const renderUsers = (users) => {
+      userList.innerHTML = `
+        <h3>Chat with others</h3>
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="Search users..." aria-label="Search users by username">
+        </div>
+        <div id="errorMessage" class="error-message" style="display: ${errorMessage.style.display};">${errorMessage.textContent}</div>
+      `;
+      users.forEach(user => {
+        const userDiv = document.createElement('div');
+        userDiv.className = 'user';
+        userDiv.setAttribute('aria-label', `Chat with ${user.username || 'Unnamed User'}`);
+        userDiv.innerHTML = `
+          <img src="${user.profilePicUrl || 'profile.png'}" alt="${user.username || 'Unnamed User'}'s profile picture">
+          <span>${user.username || 'Unnamed User'}</span>
+          <div class="status-indicator" id="status-${user.uid}" title="Offline"></div>
+        `;
+        userDiv.onclick = () => {
+          window.location.href = `chat1.html?uid=${user.uid}`;
+        };
+        focusUser(userDiv);
+        userList.appendChild(userDiv);
+
+        // Listen for status updates
+        const statusRef = ref(rtdb, `status/${user.uid}`);
+        onValue(statusRef, (snapshot) => {
+          const status = snapshot.val();
+          const statusIndicator = document.getElementById(`status-${user.uid}`);
+          if (statusIndicator) {
+            const isOnline = status && status.state === 'online';
+            statusIndicator.className = `status-indicator ${isOnline ? 'online' : ''}`;
+            statusIndicator.title = isOnline ? 'Online' : 'Offline';
+          }
+          console.log(`Status for ${user.uid}:`, status || 'No status data');
+        }, (error) => {
+          console.error(`Failed to read status for ${user.uid}:`, error.message);
+          errorMessage.textContent = 'Error fetching user statuses: ' + error.message;
+          errorMessage.style.display = 'block';
+        });
+      });
+      // Reattach search input event listener
+      document.getElementById('searchInput').value = searchInput.value;
+      document.getElementById('searchInput').addEventListener('input', () => {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        renderUsers(allUsers.filter(user => user.username.toLowerCase().includes(query)));
+      });
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUserId = user.uid;
+
+        // Set user online status
+        const userStatusRef = ref(rtdb, `status/${user.uid}`);
+        try {
+          await set(userStatusRef, { state: 'online', last_changed: Date.now() });
+          console.log(`Set status to online for user ${user.uid}`);
+          onDisconnect(userStatusRef).set({ state: 'offline', last_changed: Date.now() })
+            .then(() => console.log(`onDisconnect set for user ${user.uid}`))
+            .catch(error => {
+              console.error(`Failed to set onDisconnect for ${user.uid}:`, error.message);
+              errorMessage.textContent = 'Error setting status updates: ' + error.message;
+              errorMessage.style.display = 'block';
+            });
+        } catch (error) {
+          console.error(`Failed to set online status for ${user.uid}:`, error.message);
+          errorMessage.textContent = 'Error setting user status: ' + error.message;
+          errorMessage.style.display = 'block';
+        }
+
+        const userDocRef = doc(db, 'users', user.uid);
+        try {
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            usernameSpan.textContent = data.username || "User";
+            profileImage.src = data.profilePicUrl || "profile.png";
+          } else {
+            usernameSpan.textContent = "User";
+          }
+        } catch (error) {
+          console.error("Failed to fetch user profile:", error.message);
+          errorMessage.textContent = 'Error fetching user profile: ' + error.message;
+          errorMessage.style.display = 'block';
+        }
+
+        // Load all users except the current one
+        allUsers = [];
+        try {
+          const querySnapshot = await getDocs(collection(db, 'users'));
+          querySnapshot.forEach(docSnap => {
+            const userData = docSnap.data();
+            const uid = docSnap.id;
+            if (uid !== currentUserId) {
+              allUsers.push({
+                uid,
+                username: userData.username || 'Unnamed User',
+                profilePicUrl: userData.profilePicUrl || 'profile.png'
+              });
+            }
+          });
+          renderUsers(allUsers);
+        } catch (error) {
+          console.error("Failed to fetch users:", error.message);
+          errorMessage.textContent = 'Error fetching users: ' + error.message;
+          errorMessage.style.display = 'block';
+        }
+
+        // Check database connection
+        checkDatabaseConnection();
+      } else {
+        alert("You are not logged in!");
+        window.location.href = "login.html";
+      }
+    });
+  </script>
+</body>
+</html>

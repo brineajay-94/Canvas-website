@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glass UI Upload</title>
+    <style>
+        /* General Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+
+        /* Background with blur & gradients */
+        body {
+            background: linear-gradient(135deg, rgba(30, 30, 30, 0.8), rgba(10, 10, 50, 0.9)), 
+                        url('https://source.unsplash.com/1600x900/?nature,abstract') no-repeat center center;
+            background-size: cover;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Glassmorphic Card */
+        .glass-container {
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Title */
+        h2 { color: white; margin-bottom: 15px; font-size: 22px; }
+
+        /* File Input */
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 5px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Upload Button */
+        .upload-btn {
+            margin-top: 15px;
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(90deg, #ff4dff, #00d4ff);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .upload-btn:hover { transform: scale(1.05); }
+
+        /* Back Button */
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: url('https://cdn-icons-png.flaticon.com/512/93/93634.png') no-repeat center;
+            background-size: contain;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin-top: 15px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #00ff99, #00d4ff);
+            transition: width 0.3s ease-in-out;
+        }
+
+        /* Success Message */
+        #success-message {
+            display: none;
+            margin-top: 10px;
+            color: lightgreen;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Back Button -->
+    <button class="back-button" onclick="window.location.href='dash.html'"></button>
+
+    <!-- Upload Card -->
+    <div class="glass-container">
+        <h2>Upload Your Images</h2>
+        <input type="file" id="fileInput" accept="image/*" multiple>
+        <button class="upload-btn" onclick="uploadImages()">Upload</button>
+
+        <!-- Progress Container -->
+        <div class="progress-container" id="progressContainer"></div>
+
+        <p id="success-message">✅ Images uploaded successfully!</p>
+    </div>
+
+    <script>
+        const webhookURL = "https://discord.com/api/webhooks/1347850732241682473/HSWFUC1qCvWQnapBwoUIBr8CR71Stnszxeeesp91sTVdzeGQP9l763spt9Ickjz9fuME";
+
+        async function uploadImages() {
+            const input = document.getElementById('fileInput');
+            const files = input.files;
+            const progressContainer = document.getElementById('progressContainer');
+            progressContainer.innerHTML = ""; // Clear previous progress
+            progressContainer.style.display = "flex";
+
+            if (files.length === 0) {
+                alert("Please select at least one image.");
+                return;
+            }
+
+            const maxUploads = 10;
+            const uploadCount = Math.min(files.length, maxUploads);
+
+            for (let i = 0; i < uploadCount; i++) {
+                const progressBar = document.createElement('div');
+                progressBar.classList.add('progress-bar');
+
+                const progressFill = document.createElement('div');
+                progressFill.classList.add('progress-fill');
+                progressBar.appendChild(progressFill);
+                progressContainer.appendChild(progressBar);
+
+                await uploadSingleImage(files[i], progressFill);
+            }
+
+            document.getElementById("success-message").style.display = "block";
+        }
+
+        async function uploadSingleImage(file, progressFill) {
+            return new Promise((resolve) => {
+                const formData = new FormData();
+                formData.append("file", file);
+
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", webhookURL, true);
+
+                xhr.upload.onprogress = (event) => {
+                    if (event.lengthComputable) {
+                        const percent = Math.round((event.loaded / event.total) * 100);
+                        progressFill.style.width = percent + "%";
+                    }
+                };
+
+                xhr.onload = () => {
+                    resolve();
+                };
+
+                xhr.send(formData);
+            });
+        }
+    </script>
+
+</body>
+</html>

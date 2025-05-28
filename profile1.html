@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Profile Settings</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f8f3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #1c2a44;
+      color: white;
+      padding: 15px;
+      width: 100%;
+      border-radius: 0 0 30px 30px;
+    }
+
+    .header .back-arrow {
+      cursor: pointer;
+      font-size: 24px;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      margin: 0;
+    }
+
+    .profile-container {
+      background: white;
+      margin: 20px;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .profile-pic {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .profile-pic img {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .profile-pic input[type="file"] {
+      display: none;
+    }
+
+    .profile-pic label {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      background-color: #66bb6a;
+      color: white;
+      padding: 5px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .username-section {
+      margin-bottom: 20px;
+    }
+
+    .username-section input {
+      padding: 10px;
+      width: 80%;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      outline: none;
+      font-size: 16px;
+    }
+
+    .save-button {
+      background-color: #1c2a44;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .save-button:hover {
+      background-color: #2a4066;
+    }
+
+    .error {
+      color: red;
+      font-size: 14px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .success {
+      color: green;
+      font-size: 14px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .loading {
+      display: none;
+      font-size: 14px;
+      color: #1c2a44;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <i class="fas fa-arrow-left back-arrow" onclick="location.href='index.html'"></i>
+    <h1>Profile Settings</h1>
+    <div></div>
+  </div>
+
+  <div class="profile-container">
+    <div class="profile-pic">
+      <img id="profileImage" src="profile.png" alt="Profile Picture" />
+      <input type="file" id="profilePicInput" accept="image/*" />
+      <label for="profilePicInput"><i class="fas fa-camera"></i></label>
+    </div>
+
+    <div class="username-section">
+      <input type="text" id="usernameInput" placeholder="Enter username" />
+    </div>
+
+    <button class="save-button" onclick="saveProfile()">Save Changes</button>
+    <p class="error" id="errorMessage"></p>
+    <p class="success" id="successMessage"></p>
+    <p class="loading" id="loadingMessage">Loading...</p>
+  </div>
+
+  <!-- Firebase and Supabase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
+      authDomain: "signin-cdeed.firebaseapp.com",
+      projectId: "signin-cdeed",
+      storageBucket: "signin-cdeed.firebasestorage.app",
+      messagingSenderId: "481847681739",
+      appId: "1:481847681739:web:13b28ef686bc29f201714e",
+      measurementId: "G-L8F15D37BE"
+    };
+
+    // Supabase Configuration
+    const supabaseUrl = "YOUR_SUPABASE_URL"; // Replace with your Supabase URL
+    const supabaseKey = "YOUR_SUPABASE_ANON_KEY"; // Replace with your Supabase anon key
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const profileImage = document.getElementById("profileImage");
+    const profilePicInput = document.getElementById("profilePicInput");
+    const usernameInput = document.getElementById("usernameInput");
+    const errorMessage = document.getElementById("errorMessage");
+    const successMessage = document.getElementById("successMessage");
+    const loadingMessage = document.getElementById("loadingMessage");
+
+    // Load user profile
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        loadingMessage.style.display = "block";
+        try {
+          const userDocRef = doc(db, "users", user.uid);
+          const userDoc = await getDoc(userDocRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            console.log("Fetched user data:", userData);
+            usernameInput.value = userData.username || "";
+            profileImage.src = userData.profilePicUrl || "profile.png";
+          } else {
+            profileImage.src = "profile.png";
+            usernameInput.value = "";
+          }
+        } catch (error) {
+          console.error("Error loading user data:", error);
+          showError("Failed to load profile data.");
+          profileImage.src = "profile.png";
+        } finally {
+          loadingMessage.style.display = "none";
+        }
+      } else {
+        showError("Please log in to edit your profile.");
+        setTimeout(() => (location.href = "index.html"), 2000);
+      }
+    });
+
+    // Preview selected image
+    profilePicInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        if (!file.type.startsWith("image/")) {
+          showError("Please select an image file.");
+          profilePicInput.value = "";
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          showError("Image size must be less than 5MB.");
+          profilePicInput.value = "";
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          profileImage.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Save profile changes
+    async function saveProfile() {
+      const user = auth.currentUser;
+      if (!user) {
+        showError("You must be logged in to save changes.");
+        return;
+      }
+
+      const username = usernameInput.value.trim();
+      if (!username) {
+        showError("Username cannot be empty.");
+        return;
+      }
+
+      loadingMessage.style.display = "block";
+      try {
+        let profilePicUrl = profileImage.src;
+        let oldProfilePicPath = null;
+
+        // Check for existing profile picture to delete
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists() && userDoc.data().profilePicUrl) {
+          const oldUrl = userDoc.data().profilePicUrl;
+          const urlParts = oldUrl.split("/profile-pics/");
+          if (urlParts.length > 1) {
+            oldProfilePicPath = urlParts[1];
+          }
+        }
+
+        // Upload new profile picture to Supabase
+        if (profilePicInput.files[0]) {
+          const file = profilePicInput.files[0];
+          const fileName = `${user.uid}/${Date.now()}_${file.name}`;
+          const { data, error } = await supabase.storage
+            .from("profile-pics")
+            .upload(fileName, file);
+
+          if (error) {
+            console.error("Supabase upload error:", error);
+            showError("Failed to upload profile picture.");
+            return;
+          }
+
+          const { data: urlData } = supabase.storage
+            .from("profile-pics")
+            .getPublicUrl(fileName);
+          profilePicUrl = urlData.publicUrl;
+
+          // Delete old profile picture from Supabase
+          if (oldProfilePicPath) {
+            await supabase.storage.from("profile-pics").remove([oldProfilePicPath]);
+          }
+        }
+
+        // Update Firestore
+        await setDoc(
+          userDocRef,
+          {
+            username: username,
+            profilePicUrl: profilePicUrl,
+          },
+          { merge: true }
+        );
+
+        showSuccess("Profile updated successfully!");
+        setTimeout(() => (location.href = "index.html"), 2000);
+      } catch (error) {
+        console.error("Error saving profile:", error);
+        showError("Failed to save profile changes.");
+      } finally {
+        loadingMessage.style.display = "none";
+      }
+    }
+
+    // Show error message
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = "block";
+      successMessage.style.display = "none";
+      setTimeout(() => (errorMessage.style.display = "none"), 3000);
+    }
+
+    // Show success message
+    function showSuccess(message) {
+      successMessage.textContent = message;
+      successMessage.style.display = "block";
+      errorMessage.style.display = "none";
+      setTimeout(() => (successMessage.style.display = "none"), 3000);
+    }
+  </script>
+</body>
+</html>

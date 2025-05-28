@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Chat - Users</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .header {
+      width: 100%;
+      max-width: 800px;
+      padding: 20px;
+      color: white;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0 0 15px 15px;
+    }
+
+    .search-bar {
+      margin: 20px 0;
+      width: 90%;
+      max-width: 600px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 10px;
+      border: none;
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      outline: none;
+      backdrop-filter: blur(10px);
+    }
+
+    .users-container {
+      width: 100%;
+      max-width: 600px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .user-card {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease;
+    }
+
+    .user-card:hover {
+      transform: scale(1.02);
+    }
+
+    .user-card img {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 15px;
+      border: 2px solid white;
+    }
+
+    .user-card span {
+      color: white;
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    .footer {
+      text-align: center;
+      color: #ccc;
+      font-size: 12px;
+      margin: 30px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">Messenger - Users</div>
+  <div class="search-bar">
+    <input type="text" placeholder="Search users..." id="searchInput" />
+  </div>
+  <div id="userContainer" class="users-container"></div>
+  <div class="footer">© Ajay Kafle @2025</div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
+      authDomain: "signin-cdeed.firebaseapp.com",
+      projectId: "signin-cdeed",
+      storageBucket: "signin-cdeed.firebasestorage.app",
+      messagingSenderId: "481847681739",
+      appId: "1:481847681739:web:13b28ef686bc29f201714e",
+      measurementId: "G-L8F15D37BE"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function displayUsers() {
+      const userContainer = document.getElementById('userContainer');
+      const searchInput = document.getElementById('searchInput');
+
+      try {
+        const querySnapshot = await getDocs(collection(db, 'users'));
+        const users = [];
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          users.push({
+            id: doc.id,
+            username: data.username || 'Unknown',
+            profilePicUrl: data.profilePicUrl || 'https://via.placeholder.com/48'
+          });
+        });
+
+        function renderList(filteredUsers) {
+          userContainer.innerHTML = '';
+          filteredUsers.forEach(user => {
+            const div = document.createElement('div');
+            div.className = 'user-card';
+            div.innerHTML = `
+              <img src="${user.profilePicUrl}" alt="${user.username}">
+              <span>${user.username}</span>
+            `;
+            userContainer.appendChild(div);
+          });
+        }
+
+        searchInput.addEventListener('input', () => {
+          const term = searchInput.value.toLowerCase();
+          const filtered = users.filter(user => user.username.toLowerCase().includes(term));
+          renderList(filtered);
+        });
+
+        renderList(users);
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', displayUsers);
+  </script>
+</body>
+</html>

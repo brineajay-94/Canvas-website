@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Discord-like Chat - Messages & Profile Sidebar</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Whitney:wght@300;600&display=swap');
+
+    :root {
+      --background-dark: #18191c;
+      --background-darker: #121214;
+      --background-light: #242629;
+      --primary-blue: #5865f2;
+      --discord-purple: #7289da;
+      --text-white: #fff;
+      --text-muted: #b9bbbe;
+      --gray-dark: #2f3136;
+      --gray-medium: #36393f;
+      --scrollbar-bg: #202225;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Whitney', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--background-dark);
+      color: var(--text-white);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 280px;
+      background-color: var(--background-darker);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--gray-dark);
+      padding: 20px;
+    }
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-top: 40px;
+    }
+    .profile-avatar {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+      border: 2px solid var(--primary-blue);
+    }
+    .profile-info {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      user-select: none;
+    }
+    .profile-username {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--primary-blue);
+      margin: 0 0 4px 0;
+    }
+    .profile-status {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .chat-container {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: var(--background-light);
+    }
+    .chat-header {
+      border-bottom: 1px solid var(--gray-dark);
+      padding: 16px 20px;
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--primary-blue);
+      user-select: none;
+    }
+    .messages {
+      flex-grow: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .messages::-webkit-scrollbar {
+      width: 10px;
+    }
+    .messages::-webkit-scrollbar-track {
+      background: var(--scrollbar-bg);
+    }
+    .messages::-webkit-scrollbar-thumb {
+      background-color: var(--primary-blue);
+      border-radius: 6px;
+      border: 2px solid var(--scrollbar-bg);
+    }
+    .message {
+      display: flex;
+      margin-bottom: 16px;
+      user-select: text;
+    }
+    .message .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background-size: cover;
+      background-position: center;
+      margin-right: 12px;
+      border: 2px solid var(--primary-blue);
+    }
+    .message-content {
+      flex-grow: 1;
+      color: var(--text-white);
+    }
+    .message-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .message-username {
+      font-weight: 700;
+      color: var(--primary-blue);
+      margin-right: 8px;
+    }
+    .message-timestamp {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .message-text {
+      white-space: pre-wrap;
+      font-size: 15px;
+      line-height: 1.3;
+    }
+    .input-container {
+      padding: 12px 20px;
+      border-top: 1px solid var(--gray-dark);
+      background-color: var(--background-darker);
+      display: flex;
+      align-items: center;
+    }
+    textarea {
+      resize: none;
+      flex-grow: 1;
+      border-radius: 8px;
+      border: none;
+      background-color: var(--gray-medium);
+      color: var(--text-white);
+      font-family: 'Whitney', sans-serif;
+      font-size: 14px;
+      padding: 10px 14px;
+      min-height: 45px;
+      max-height: 120px;
+      outline: none;
+      transition: background-color 0.2s;
+    }
+    textarea:focus {
+      background-color: var(--background-light);
+    }
+    button.send-btn {
+      background-color: var(--primary-blue);
+      border: none;
+      color: var(--text-white);
+      font-weight: 600;
+      margin-left: 12px;
+      padding: 0 20px;
+      height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 15px;
+      transition: background-color 0.2s;
+    }
+    button.send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    button.send-btn:hover:not(:disabled) {
+      background-color: #4756e6;
+    }
+    .scroll-btn {
+      position: absolute;
+      bottom: 80px;
+      right: 40px;
+      background-color: var(--primary-blue);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      border: none;
+      color: var(--text-white);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+    }
+    .scroll-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+    @media (max-width: 600px) {
+      .sidebar {
+        width: 60px;
+        padding: 12px 8px;
+      }
+      .profile {
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+        gap: 8px;
+      }
+      .profile-username {
+        font-size: 16px;
+        text-align: center;
+      }
+      .profile-status {
+        font-size: 12px;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar" aria-label="User Profile Sidebar">
+    <div class="profile">
+      <div class="profile-avatar" id="profileAvatar" title="User Avatar"></div>
+      <div class="profile-info">
+        <h2 class="profile-username" id="profileUsername">Guest</h2>
+        <div class="profile-status" id="profileStatus">Please Login</div>
+      </div>
+    </div>
+  </aside>
+  <main class="chat-container" role="main">
+    <header class="chat-header" aria-live="polite" aria-atomic="true" id="chatHeader">#general</header>
+    <section class="messages" id="messages" tabindex="0" aria-live="polite" aria-atomic="false" aria-relevant="additions" aria-label="Chat messages">
+      <!-- User messages appear here -->
+    </section>
+    <div class="input-container" aria-label="Send message area">
+      <textarea id="messageInput" rows="1" aria-label="Message input" placeholder="Message #general"></textarea>
+      <button id="sendBtn" class="send-btn" disabled>Send</button>
+    </div>
+  </main>
+
+  <button class="scroll-btn" id="scrollBtn" aria-label="Scroll to bottom" title="Scroll to bottom" type="button">
+    <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+  </button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+    import { getDatabase, ref, push, onChildAdded, onChildChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
+      authDomain: "signin-cdeed.firebaseapp.com",
+      projectId: "signin-cdeed",
+      storageBucket: "signin-cdeed.firebasestorage.app",
+      messagingSenderId: "481847681739",
+      appId: "1:481847681739:web:13b28ef686bc29f201714e",
+      measurementId: "G-L8F15D37BE"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const realtimeDb = getDatabase(app);
+
+    // DOM elements
+    const profileAvatarEl = document.getElementById('profileAvatar');
+    const profileUsernameEl = document.getElementById('profileUsername');
+    const profileStatusEl = document.getElementById('profileStatus');
+    const chatHeaderEl = document.getElementById('chatHeader');
+    const messagesEl = document.getElementById('messages');
+    const messageInputEl = document.getElementById('messageInput');
+    const sendBtnEl = document.getElementById('sendBtn');
+    const scrollBtn = document.getElementById('scrollBtn');
+
+    let currentUser = null;
+    const channelName = 'general';
+    let messages = [];
+
+    // Format timestamp for display
+    function formatTimestamp(ts) {
+      const date = new Date(ts);
+      const now = new Date();
+      const diff = now - date;
+      if (diff < 60000) return 'Just now';
+      if (diff < 3600000) {
+        const m = Math.floor(diff / 60000);
+        return m + (m === 1 ? ' min ago' : ' mins ago');
+      }
+      if (date.toDateString() === now.toDateString()) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+      const p = document.createElement('p');
+      p.appendChild(document.createTextNode(text));
+      return p.innerHTML;
+    }
+
+    // Render messages
+    function renderMessages() {
+      messagesEl.innerHTML = '';
+      messages.forEach(msg => {
+        const msgEl = document.createElement('article');
+        msgEl.className = 'message';
+        msgEl.setAttribute('tabindex', '-1');
+        msgEl.innerHTML = `
+          <div class="avatar" style="background-image: url('${msg.user.avatar}')" title="${msg.user.username}"></div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="message-username">${msg.user.username}</span>
+              <span class="message-timestamp" title="${new Date(msg.timestamp).toLocaleString()}">${formatTimestamp(msg.timestamp)}</span>
+            </div>
+            <div class="message-text">${escapeHtml(msg.text)}</div>
+          </div>
+        `;
+        messagesEl.appendChild(msgEl);
+      });
+      scrollToBottom();
+    }
+
+    // Scroll messages container to bottom
+    function scrollToBottom() {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      scrollBtn.style.display = 'none';
+    }
+
+    // Show/hide scroll button based on scroll
+    function checkScrollButton() {
+      const threshold = 100;
+      if (messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight > threshold) {
+        scrollBtn.style.display = 'flex';
+      } else {
+        scrollBtn.style.display = 'none';
+      }
+    }
+
+    // Initialize profile and chat
+    async function initProfile() {
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              currentUser = {
+                id: user.uid,
+                username: userData.username || 'User',
+                avatar: userData.profilePicUrl || 'profile.png'
+              };
+              profileAvatarEl.style.backgroundImage = `url('${currentUser.avatar}')`;
+              profileUsernameEl.textContent = currentUser.username;
+              profileStatusEl.textContent = 'Online';
+            } else {
+              console.error('User document not found in Firestore');
+              currentUser = {
+                id: user.uid,
+                username: 'User',
+                avatar: 'profile.png'
+              };
+              profileAvatarEl.style.backgroundImage = `url('${currentUser.avatar}')`;
+              profileUsernameEl.textContent = currentUser.username;
+              profileStatusEl.textContent = 'Online';
+            }
+            messageInputEl.disabled = false;
+            initRealtimeDatabase();
+          } catch (error) {
+            console.error('Error fetching user data:', error);
+            currentUser = null;
+            profileAvatarEl.style.backgroundImage = `url('profile.png')`;
+            profileUsernameEl.textContent = 'Guest';
+            profileStatusEl.textContent = 'Please Login';
+            messageInputEl.disabled = true;
+            messagesEl.innerHTML = '<p>Please login to send messages.</p>';
+          }
+        } else {
+          currentUser = null;
+          profileAvatarEl.style.backgroundImage = `url('profile.png')`;
+          profileUsernameEl.textContent = 'Guest';
+          profileStatusEl.textContent = 'Please Login';
+          messageInputEl.disabled = true;
+          messagesEl.innerHTML = '<p>Please login to send messages.</p>';
+        }
+      });
+    }
+
+    // Initialize Firebase Realtime Database
+    function initRealtimeDatabase() {
+      const messagesRef = ref(realtimeDb, `messages/${channelName}`);
+      onChildAdded(messagesRef, (snapshot) => {
+        const msg = snapshot.val();
+        messages.push({
+          id: snapshot.key,
+          user: {
+            id: msg.userId,
+            username: msg.username,
+            avatar: msg.avatar
+          },
+          text: msg.text,
+          timestamp: msg.timestamp
+        });
+        renderMessages();
+      });
+
+      onChildChanged(messagesRef, (snapshot) => {
+        const updatedMsg = snapshot.val();
+        const index = messages.findIndex(m => m.id === snapshot.key);
+        if (index !== -1) {
+          messages[index] = {
+            id: snapshot.key,
+            user: {
+              id: updatedMsg.userId,
+              username: updatedMsg.username,
+              avatar: updatedMsg.avatar
+            },
+            text: updatedMsg.text,
+            timestamp: updatedMsg.timestamp
+          };
+          renderMessages();
+        }
+      });
+    }
+
+    // Add a new message
+    function addMessage(text) {
+      if (!text || !currentUser) return;
+      const messagesRef = ref(realtimeDb, `messages/${channelName}`);
+      push(messagesRef, {
+        userId: currentUser.id,
+        username: currentUser.username,
+        avatar: currentUser.avatar,
+        text: text,
+        timestamp: Date.now()
+      });
+      messageInputEl.value = '';
+      sendBtnEl.disabled = true;
+      messageInputEl.focus();
+    }
+
+    // Event listeners
+    messageInputEl.addEventListener('input', () => {
+      sendBtnEl.disabled = !currentUser || messageInputEl.value.trim().length === 0;
+    });
+
+    messageInputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!sendBtnEl.disabled) {
+          addMessage(messageInputEl.value.trim());
+        }
+      }
+    });
+
+    sendBtnEl.addEventListener('click', () => {
+      if (!sendBtnEl.disabled) {
+        addMessage(messageInputEl.value.trim());
+      }
+    });
+
+    messagesEl.addEventListener('scroll', checkScrollButton);
+    scrollBtn.addEventListener('click', scrollToBottom);
+
+    // Initialize UI
+    function init() {
+      chatHeaderEl.textContent = `#${channelName}`;
+      messageInputEl.placeholder = `Message #${channelName}`;
+      initProfile();
+    }
+
+    init();
+  </script>
+</body>
+</html>
