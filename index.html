@@ -9,7 +9,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
 
-        /* Reset and base */
         * {
             margin: 0;
             padding: 0;
@@ -24,7 +23,6 @@
             color: #fff;
         }
 
-        /* Background video */
         #bg-video {
             position: fixed;
             top: 50%;
@@ -39,7 +37,6 @@
             filter: brightness(0.45) contrast(1.1);
         }
 
-        /* Overlay to enhance contrast */
         body::before {
             content: "";
             position: fixed;
@@ -49,7 +46,6 @@
             z-index: 0;
         }
 
-        /* Gradient overlay */
         .gradient-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -73,13 +69,10 @@
             z-index: 2;
         }
 
-        /* Welcome text */
         .welcome-text {
             font-size: 1.2rem;
             letter-spacing: 0.04em;
-            text-shadow:
-                0 0 8px rgba(255, 255, 255, 0.3),
-                0 0 10px rgba(255, 255, 255, 0.2);
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.2);
             margin-bottom: 1.8rem;
             opacity: 0;
             animation: fadeInUp 1.4s ease forwards;
@@ -90,7 +83,6 @@
             transform: scale(1.05);
         }
 
-        /* "lets go" card */
         .lets-go-card {
             position: relative;
             cursor: pointer;
@@ -100,9 +92,7 @@
             border-radius: 16px;
             color: #e0f7ff;
             background: rgba(255, 255, 255, 0.1);
-            box-shadow:
-                0 0 8px rgba(0, 255, 255, 0.05),
-                inset 0 0 12px rgba(0, 255, 255, 0.15);
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.05), inset 0 0 12px rgba(0, 255, 255, 0.15);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             user-select: none;
@@ -116,7 +106,6 @@
             transform: scale(1.1);
         }
 
-        /* Glowing border animation */
         .lets-go-card::before {
             content: "";
             position: absolute;
@@ -126,36 +115,22 @@
             background: linear-gradient(270deg, #00ffff, #0077ff, #00ffff, #00ffef, #0077ff);
             background-size: 1000% 1000%;
             animation: glowingLine 5s linear infinite;
-            -webkit-mask:
-                linear-gradient(#fff 0 0) content-box, 
-                linear-gradient(#fff 0 0);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
             -webkit-mask-composite: destination-out;
             mask-composite: exclude;
             z-index: -1;
         }
 
-        /* Animations */
         @keyframes glowingLine {
-            0% {
-                background-position: 0% 50%;
-            }
-            100% {
-                background-position: 100% 50%;
-            }
+            0% { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
         }
 
         @keyframes fadeInUp {
-            0% {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            100% {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
         }
 
-        /* Loading Spinner */
         #loading-spinner {
             display: none;
             position: fixed;
@@ -179,7 +154,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* Footer */
         footer {
             position: absolute;
             bottom: 20px;
@@ -190,7 +164,6 @@
             z-index: 2;
         }
 
-        /* Responsive font scaling */
         @media (max-width: 450px) {
             .welcome-text {
                 font-size: 0.75rem;
@@ -203,7 +176,6 @@
             }
         }
 
-        /* Stars */
         .stars {
             position: fixed;
             top: 0;
@@ -223,22 +195,13 @@
         }
 
         @keyframes fall {
-            0% {
-                transform: translateY(-100px);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh);
-                opacity: 0;
-            }
+            0% { transform: translateY(-100px); opacity: 1; }
+            100% { transform: translateY(100vh); opacity: 0; }
         }
     </style>
 </head>
 <body>
-    <div id="loading-spinner">
-        <div class="spinner"></div>
-    </div>
-
+    <div id="loading-spinner"><div class="spinner"></div></div>
     <div class="stars"></div>
 
     <video id="bg-video" autoplay muted loop playsinline aria-label="Background video">
@@ -254,17 +217,27 @@
         <div class="lets-go-card" role="button" tabindex="0" aria-label="Proceed to next page">lets go</div>
     </div>
 
-    <footer>
-        © 2025 Ajay Kafle. All rights reserved.
-    </footer>
+    <!-- AD SCRIPT BLOCK -->
+    <div style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 3;">
+        <script type="text/javascript">
+            atOptions = {
+                'key' : '11d077d4267c3ab72c663e9d2eb302c7',
+                'format' : 'iframe',
+                'height' : 60,
+                'width' : 468,
+                'params' : {}
+            };
+        </script>
+        <script type="text/javascript" src="//www.highperformanceformat.com/11d077d4267c3ab72c663e9d2eb302c7/invoke.js"></script>
+    </div>
+
+    <footer>© 2025 Ajay Kafle. All rights reserved.</footer>
 
     <script type="module">
-        // Import Firebase SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-analytics.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
 
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
             authDomain: "signin-cdeed.firebaseapp.com",
@@ -275,38 +248,21 @@
             measurementId: "G-L8F15D37BE"
         };
 
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const auth = getAuth(app);
 
-        // Video handling
         const video = document.getElementById('bg-video');
         const spinner = document.getElementById('loading-spinner');
 
-        video.addEventListener('loadstart', () => {
-            spinner.style.display = 'block';
-        });
+        video.addEventListener('loadstart', () => { spinner.style.display = 'block'; });
+        video.addEventListener('loadeddata', () => { spinner.style.display = 'none'; });
+        video.addEventListener('error', () => { spinner.style.display = 'none'; });
 
-        video.addEventListener('loadeddata', () => {
-            spinner.style.display = 'none';
-        });
+        video.addEventListener('mouseover', () => { video.pause(); });
+        video.addEventListener('mouseout', () => { video.play(); });
 
-        video.addEventListener('error', () => {
-            spinner.style.display = 'none';
-        });
-
-        video.addEventListener('mouseover', () => {
-            video.pause();
-        });
-
-        video.addEventListener('mouseout', () => {
-            video.play();
-        });
-
-        // Star animation
         const starsContainer = document.querySelector('.stars');
-
         function createStar() {
             const star = document.createElement('div');
             star.className = 'star';
@@ -316,39 +272,21 @@
             star.style.left = `${Math.random() * 100}vw`;
             star.style.animationDuration = `${Math.random() * 2 + 3}s`;
             starsContainer.appendChild(star);
-
-            star.addEventListener('animationend', () => {
-                star.remove();
-            });
+            star.addEventListener('animationend', () => star.remove());
         }
-
         setInterval(createStar, 300);
 
-        // Redirect logic for "Let's Go" button
         const letsGoButton = document.querySelector('.lets-go-card');
-
         letsGoButton.addEventListener('click', () => {
             onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    // User is signed in, redirect to dashboard
-                    window.location.href = 'dash.html';
-                } else {
-                    // User is not signed in, redirect to login
-                    window.location.href = 'login.html';
-                }
+                window.location.href = user ? 'dash.html' : 'login.html';
             });
         });
-
-        // Optional: Handle keyboard accessibility
         letsGoButton.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
                 onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        window.location.href = 'dash.html';
-                    } else {
-                        window.location.href = 'login.html';
-                    }
+                    window.location.href = user ? 'dash.html' : 'login.html';
                 });
             }
         });
