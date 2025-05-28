@@ -5,10 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>economics Image Gallery</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
 
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
             authDomain: "signin-cdeed.firebaseapp.com",
@@ -19,6 +22,7 @@
             measurementId: "G-L8F15D37BE"
         };
 
+        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
@@ -29,172 +33,563 @@
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZndxY3ZkbXZlcGZucmZhdW9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NDEzNDEsImV4cCI6MjA2MzAxNzM0MX0.JVZdY8iz_fk2KkiufoYbL49VHtblRq5OhA6pPMonWyY'
         );
 
-        // Load images with uploader info
-        window.loadImages = async () => {
-            const imageGrid = document.getElementById('imageGrid');
+        // Cache settings (7 days expiration)
+        const CACHE_EXPIRATION = 7 * 24 * 60 * 60 * 1000;
+        const CACHE_KEY = 'economicsGalleryCache';
+
+        // DOM elements
+        const imageGrid = document.getElementById('imageGrid');
+        const cacheIndicator = document.getElementById('cacheIndicator');
+
+        // Function to save data to cache
+        function saveToCache(data) {
+            const cacheData = {
+                timestamp: Date.now(),
+                data: data
+            };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+        }
+
+        // Function to get data from cache
+        function getFromCache() {
+            const cache = localStorage.getItem(CACHE_KEY);
+            if (!cache) return null;
+            
+            const parsedCache = JSON.parse(cache);
+            const isExpired = Date.now() - parsedCache.timestamp > CACHE_EXPIRATION;
+            
+            if (isExpired) {
+                localStorage.removeItem(CACHE_KEY);
+                return null;
+            }
+            
+            return parsedCache.data;
+        }
+
+        // Function to fetch fresh data from Firebase and Supabase
+        async function fetchFreshData() {
+            try {
+                // Get list of files from Supabase
+                const { data: files, error: listError } = await supabaseClient.storage
+                    .from('economics')
+                    .list();
+
+                if (listError) throw listError;
+
+                // Get all image metadata from Firestore
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                const imageMetadata = [];
+                
+                for (const userDoc of usersSnapshot.docs) {
+                    const imagesSnapshot = await getDocs(collection(db, 'users', userDoc.id, 'images'));
+                    imagesSnapshot.forEach((doc) => {
+                        imageMetadata.push({ id: doc.id, ...doc.data() });
+                    });
+                }
+
+                // Process images for display and caching
+                const imagesData = [];
+                for (const file of files) {
+                    if (file.name === '.') continue;
+                    const { publicUrl } = supabaseClient.storage.from('economics').getPublicUrl(file.name).data;
+                    const metadata = imageMetadata.find(meta => meta.filename === file.name) || {};
+                    
+                    imagesData.push({
+                        url: publicUrl,
+                        name: file.name,
+                        username: metadata.username || 'Unknown',
+                        uploadTime: metadata.uploadTime || 'just now'
+                    });
+                }
+
+                return imagesData;
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                throw error;
+            }
+        }
+
+        // Function to render images
+        function renderImages(images, fromCache = false) {
+            if (fromCache) {
+                cacheIndicator.style.display = 'block';
+                setTimeout(() => {
+                    cacheIndicator.style.display = 'none';
+                }, 3000);
+            }
+
             imageGrid.innerHTML = '';
-
-            // Get list of files from Supabase
-            const { data: files, error: listError } = await supabaseClient.storage
-                .from('economics')
-                .list();
-
-            if (listError) {
-                alert('Error loading images: ' + listError.message);
-                console.error('List error:', listError);
+            
+            if (images.length === 0) {
+                imageGrid.innerHTML = '<p class="no-images">No images found</p>';
                 return;
             }
-
-            // Get all image metadata from Firestore
-            const usersSnapshot = await getDocs(collection(db, 'users'));
-            const imageMetadata = [];
-            for (const userDoc of usersSnapshot.docs) {
-                const imagesSnapshot = await getDocs(collection(db, 'users', userDoc.id, 'images'));
-                imagesSnapshot.forEach((doc) => {
-                    imageMetadata.push({ id: doc.id, ...doc.data() });
-                });
-            }
-
-            // Display images
-            for (const file of files) {
-                if (file.name === '.') continue;
-                const { publicUrl } = supabaseClient.storage.from('economics').getPublicUrl(file.name).data;
-                
-                // Find matching metadata
-                const metadata = imageMetadata.find(meta => meta.filename === file.name) || {};
-                const username = metadata.username || 'Unknown';
-
+            
+            images.forEach(image => {
                 const card = document.createElement('div');
                 card.className = 'image-card';
                 card.innerHTML = `
-                    <img src="${publicUrl}" alt="${file.name}">
+                    <div class="card-image-container">
+                        <img src="${image.url}" alt="${image.name}" loading="lazy">
+                        <div class="image-overlay">
+                            <button class="like-btn"><i class="far fa-heart"></i></button>
+                            <button class="download-btn"><i class="fas fa-download"></i></button>
+                        </div>
+                    </div>
                     <div class="uploader-info">
-                        <p>Uploaded by ${username}</p>
+                        <div class="user-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="user-details">
+                            <p class="username">${image.username}</p>
+                            <p class="upload-time">${image.uploadTime}</p>
+                        </div>
                     </div>
                 `;
                 imageGrid.appendChild(card);
-            }
-            console.log('Images loaded:', files.length);
-        };
+            });
+        }
 
-        // Load images when the page loads
-        document.addEventListener('DOMContentLoaded', window.loadImages);
+        // Main function to load images
+        async function loadImages() {
+            // Show loading state only if we don't have cache
+            const cachedData = getFromCache();
+            if (!cachedData) {
+                imageGrid.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+            }
+
+            try {
+                // Try to load from cache first
+                if (cachedData) {
+                    renderImages(cachedData, true);
+                    
+                    // Fetch fresh data in background without showing loading state
+                    fetchFreshData()
+                        .then(freshData => {
+                            saveToCache(freshData);
+                            // Only update if there are changes
+                            if (JSON.stringify(cachedData) !== JSON.stringify(freshData)) {
+                                renderImages(freshData);
+                            }
+                        })
+                        .catch(error => {
+                            console.log('Background refresh failed:', error);
+                        });
+                    
+                    return;
+                }
+                
+                // If no cache, fetch fresh data
+                const freshData = await fetchFreshData();
+                saveToCache(freshData);
+                renderImages(freshData);
+                
+            } catch (error) {
+                imageGrid.innerHTML = '<p class="error-message">Failed to load images. Please try again later.</p>';
+                console.error('Error loading images:', error);
+            }
+        }
+
+        // Clear cache function (for debugging)
+        function clearCache() {
+            localStorage.removeItem(CACHE_KEY);
+            const indicator = document.createElement('div');
+            indicator.textContent = 'Cache cleared!';
+            indicator.className = 'cache-notification';
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => {
+                indicator.remove();
+            }, 2000);
+            
+            // Reload images
+            loadImages();
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            loadImages();
+            
+            // Add clear cache button (for debugging)
+            const clearCacheBtn = document.createElement('button');
+            clearCacheBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Cache';
+            clearCacheBtn.className = 'clear-cache-btn';
+            clearCacheBtn.addEventListener('click', clearCache);
+            document.body.appendChild(clearCacheBtn);
+        });
+
     </script>
     <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #6366f1;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --bg-light: #f8fafc;
+            --bg-dark: #0f172a;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, #e0e7ff, #c3cfe2);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             padding: 20px;
             overflow-x: hidden;
+            color: var(--text-dark);
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 0 20px;
         }
 
         .home-icon {
             position: fixed;
             top: 20px;
             left: 20px;
-            background: rgba(255, 255, 255, 0.25);
-            border-radius: 12px;
-            padding: 12px;
+            background: var(--card-bg);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             backdrop-filter: blur(12px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
             z-index: 1000;
+            color: var(--primary);
+            font-size: 1.5rem;
+            text-decoration: none;
         }
 
         .home-icon:hover {
-            transform: translateY(-2px);
-            background: rgba(255, 255, 255, 0.35);
-        }
-
-        .home-icon img {
-            width: 28px;
-            height: 28px;
+            transform: translateY(-3px) scale(1.05);
+            background: white;
+            color: var(--primary-light);
         }
 
         .section {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 24px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 32px;
+            margin: 40px 0;
             backdrop-filter: blur(12px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         h2 {
-            color: #1f2937;
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 16px;
+            color: var(--text-dark);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            position: relative;
+            display: inline-block;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
         }
 
         .image-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
         }
 
         .image-card {
-            background: rgba(255, 255, 255, 0.25);
+            background: white;
             border-radius: 16px;
-            padding: 16px;
-            text-align: center;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            overflow: hidden;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
         }
 
         .image-card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
-        .image-card img {
-            max-width: 100%;
-            border-radius: 10px;
-            margin-bottom: 12px;
+        .card-image-container {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            overflow: hidden;
+        }
+
+        .card-image-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .image-card:hover .card-image-container img {
+            transform: scale(1.05);
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 40%);
+            opacity: 0;
+            transition: var(--transition);
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-end;
+            padding: 16px;
+            gap: 10px;
+        }
+
+        .image-card:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .like-btn, .download-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-dark);
+            transition: var(--transition);
+        }
+
+        .like-btn:hover, .download-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
         }
 
         .uploader-info {
-            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: white;
+            margin-top: auto;
         }
 
-        .uploader-info p {
-            font-size: 0.85rem;
-            color: #1f2937;
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e7ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .username {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-dark);
+        }
+
+        .upload-time {
+            font-size: 0.75rem;
+            color: var(--text-light);
+        }
+
+        .loader {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            grid-column: 1 / -1;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(79, 70, 229, 0.2);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #ef4444;
+            text-align: center;
+            padding: 20px;
+            font-weight: 500;
+            grid-column: 1 / -1;
+        }
+
+        .no-images {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light);
+            grid-column: 1 / -1;
+        }
+
+        .cache-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            display: none;
+        }
+
+        .clear-cache-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .clear-cache-btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .cache-notification {
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border-radius: 20px;
+            z-index: 1000;
+        }
+
+        @media (max-width: 1024px) {
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
         }
 
         @media (max-width: 768px) {
             .section {
-                padding: 16px;
+                padding: 24px;
+                border-radius: 20px;
+            }
+
+            h2 {
+                font-size: 1.75rem;
             }
 
             .image-grid {
-                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 16px;
             }
         }
 
         @media (max-width: 480px) {
+            .section {
+                padding: 20px;
+                border-radius: 16px;
+                margin: 20px 0;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
             .image-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .home-icon {
+                width: 44px;
+                height: 44px;
+                font-size: 1.2rem;
+            }
+
+            .clear-cache-btn {
+                font-size: 0;
+                width: 44px;
+                height: 44px;
+                justify-content: center;
+            }
+
+            .clear-cache-btn i {
+                font-size: 1rem;
+                margin: 0;
             }
         }
     </style>
 </head>
 <body>
     <a href="dash.html" class="home-icon">
-        <img src="https://img.icons8.com/ios-filled/50/000000/home.png" alt="Home">
+        <i class="fas fa-home"></i>
     </a>
     <div class="container">
         <div class="section">
@@ -202,5 +597,6 @@
             <div class="image-grid" id="imageGrid"></div>
         </div>
     </div>
+    <div class="cache-indicator" id="cacheIndicator">Loaded from cache</div>
 </body>
 </html>
