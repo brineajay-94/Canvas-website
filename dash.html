@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Student Dashboard</title>
+  <title>brineajay</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -378,11 +378,24 @@
 </div>
 
 <footer>
-  <p>© 2023 Student Dashboard. All rights reserved.</p>
+  <p>© 2025 brineajay. All rights reserved.</p>
 </footer>
 
 <!-- Firebase SDK & Firestore Script -->
 <script type="module">
+  // Immediately load cached profile data
+  (function loadProfileFromCache() {
+    const welcomeMessage = document.getElementById('welcomeMessage');
+    const profileImage = document.getElementById('profileImage');
+    const savedProfile = localStorage.getItem('userProfile');
+    
+    if (savedProfile) {
+      const profileData = JSON.parse(savedProfile);
+      welcomeMessage.innerHTML = `<span class="welcome-text">Welcome ${profileData.username}</span>`;
+      profileImage.src = profileData.photoUrl;
+    }
+  })();
+
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-analytics.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
@@ -407,35 +420,33 @@
   const profileImage = document.getElementById('profileImage');
   const notificationCount = document.getElementById('notificationCount');
 
-  // Check local storage for profile data
-  function checkLocalStorage() {
-    const savedProfile = localStorage.getItem('userProfile');
-    if (savedProfile) {
-      const profileData = JSON.parse(savedProfile);
-      welcomeMessage.innerHTML = `<span class="welcome-text">Welcome ${profileData.username}</span>`;
-      profileImage.src = profileData.photoUrl;
-      return true;
-    }
-    return false;
-  }
-
   // Save profile data to local storage
   function saveToLocalStorage(username, photoUrl) {
     const profileData = {
       username: username,
-      photoUrl: photoUrl
+      photoUrl: photoUrl,
+      lastUpdated: Date.now()
     };
     localStorage.setItem('userProfile', JSON.stringify(profileData));
   }
 
-  onAuthStateChanged(auth, async (user) => {
-    // First check local storage for cached profile
-    const hasLocalData = checkLocalStorage();
+  // Check if cached data is stale (older than 1 day)
+  function isCacheStale() {
+    const savedProfile = localStorage.getItem('userProfile');
+    if (!savedProfile) return true;
     
+    const profileData = JSON.parse(savedProfile);
+    if (!profileData.lastUpdated) return true;
+    
+    const oneDay = 24 * 60 * 60 * 1000;
+    return (Date.now() - profileData.lastUpdated) > oneDay;
+  }
+
+  onAuthStateChanged(auth, async (user) => {
     if (user) {
       try {
-        // Only fetch from Firestore if we don't have local data
-        if (!hasLocalData) {
+        // Only fetch from Firestore if cache is stale or doesn't exist
+        if (isCacheStale()) {
           const userDocRef = doc(db, 'users', user.uid);
           const userDoc = await getDoc(userDocRef);
           
@@ -449,16 +460,10 @@
             
             // Save to local storage for future visits
             saveToLocalStorage(username, photoUrl);
-          } else {
-            console.error('User document not found in Firestore');
-            welcomeMessage.innerHTML = `<span class="welcome-text">Welcome User</span>`;
-            profileImage.src = "profile.png";
           }
         }
       } catch (error) {
         console.error('Error fetching user data from Firestore:', error);
-        welcomeMessage.innerHTML = `<span class="welcome-text">Welcome User</span>`;
-        profileImage.src = "profile.png";
       }
     } else {
       welcomeMessage.innerHTML = `<span class="welcome-text">Welcome Guest</span><span class="login-text">Please Login</span>`;
@@ -484,7 +489,6 @@
       const query = this.value.trim();
       if (query) {
         alert(`Searching for: ${query}`);
-        // In a real app, you would implement search functionality here
       }
     }
   });
