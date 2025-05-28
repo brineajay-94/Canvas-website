@@ -211,7 +211,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            pointer-events: none; /* Prevent interaction */
+            pointer-events: none;
         }
 
         .star {
@@ -251,33 +251,51 @@
 
     <div class="container" role="main" aria-label="Welcome message and navigation">
         <div class="welcome-text" aria-live="polite">Welcome to an app created by Ajay Kafle</div>
-        <a href="login.html" class="lets-go-card" role="button" tabindex="0" aria-label="Proceed to login page">lets go</a>
+        <div class="lets-go-card" role="button" tabindex="0" aria-label="Proceed to next page">lets go</div>
     </div>
 
     <footer>
-        &copy; 2025 Ajay Kafle. All rights reserved.
+        © 2025 Ajay Kafle. All rights reserved.
     </footer>
 
-    <script>
+    <script type="module">
+        // Import Firebase SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-analytics.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
+            authDomain: "signin-cdeed.firebaseapp.com",
+            projectId: "signin-cdeed",
+            storageBucket: "signin-cdeed.firebasestorage.app",
+            messagingSenderId: "481847681739",
+            appId: "1:481847681739:web:13b28ef686bc29f201714e",
+            measurementId: "G-L8F15D37BE"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+
+        // Video handling
         const video = document.getElementById('bg-video');
         const spinner = document.getElementById('loading-spinner');
 
-        // Show spinner when video starts loading
         video.addEventListener('loadstart', () => {
             spinner.style.display = 'block';
         });
 
-        // Hide spinner when video data is loaded
         video.addEventListener('loadeddata', () => {
             spinner.style.display = 'none';
         });
 
-        // Optional: Hide spinner if video fails to load
         video.addEventListener('error', () => {
             spinner.style.display = 'none';
         });
 
-        // Pause video on hover
         video.addEventListener('mouseover', () => {
             video.pause();
         });
@@ -286,27 +304,54 @@
             video.play();
         });
 
-        // Star animation code
+        // Star animation
         const starsContainer = document.querySelector('.stars');
 
         function createStar() {
             const star = document.createElement('div');
             star.className = 'star';
-            const size = Math.random() * 5 + 2; // Random size between 2 and 7
+            const size = Math.random() * 5 + 2;
             star.style.width = `${size}px`;
             star.style.height = `${size}px`;
-            star.style.left = `${Math.random() * 100}vw`; // Random horizontal position
-            star.style.animationDuration = `${Math.random() * 2 + 3}s`; // Random fall duration
+            star.style.left = `${Math.random() * 100}vw`;
+            star.style.animationDuration = `${Math.random() * 2 + 3}s`;
             starsContainer.appendChild(star);
 
-            // Remove star after animation ends
             star.addEventListener('animationend', () => {
                 star.remove();
             });
         }
 
-        // Create stars at intervals
         setInterval(createStar, 300);
+
+        // Redirect logic for "Let's Go" button
+        const letsGoButton = document.querySelector('.lets-go-card');
+
+        letsGoButton.addEventListener('click', () => {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    // User is signed in, redirect to dashboard
+                    window.location.href = 'dash.html';
+                } else {
+                    // User is not signed in, redirect to login
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+
+        // Optional: Handle keyboard accessibility
+        letsGoButton.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        window.location.href = 'dash.html';
+                    } else {
+                        window.location.href = 'login.html';
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
