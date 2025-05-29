@@ -443,7 +443,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
-    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
     import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-database.js";
 
@@ -465,12 +465,39 @@
     let currentUserId;
     const recipientId = new URLSearchParams(window.location.search).get("uid");
 
-    // Authenticate user
+    // Update user status in Firestore
+    async function updateUserStatus(userId, status) {
+      try {
+        const userRef = doc(db, "users", userId);
+        await updateDoc(userRef, {
+          isOnline: status,
+          lastActive: Date.now()
+        });
+      } catch (error) {
+        console.error("Error updating user status:", error);
+      }
+    }
+
+    // Handle user authentication and status updates
     onAuthStateChanged(auth, (user) => {
       if (user) {
         currentUserId = user.uid;
+        // Set user as online
+        updateUserStatus(currentUserId, true);
         loadRecipientData();
         loadMessages();
+
+        // Handle disconnection (user closes tab or logs out)
+        window.addEventListener('beforeunload', async () => {
+          await updateUserStatus(currentUserId, false);
+        });
+
+        // Optional: Update status to offline when user logs out
+        auth.onAuthStateChanged((user) => {
+          if (!user) {
+            updateUserStatus(currentUserId, false);
+          }
+        });
       } else {
         window.location.href = "login.html";
       }
