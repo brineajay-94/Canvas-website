@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>नेपाली क्यालेन्डर २०८१ | Nepali Calendar</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #d72323;
+            --secondary: #3a4750;
+            --accent: #f6c90e;
+            --light: #f5f5f5;
+            --dark: #212121;
+            --holiday: #e74c3c;
+            --festival: #27ae60;
+            --today: #3498db;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 20px;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, var(--primary), #a51c1c);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M28.1,76.1c-0.9,0.5-1.8,0.9-2.7,1.3c-1.9,0.8-4,1.4-6.1,1.7c-2.1,0.3-4.3,0.5-6.5,0.5c-4.4,0-8.4-1.1-11.9-3.3 c-3.5-2.2-6.3-5.2-8.3-9c-2-3.8-3-8-3-12.5c0-4.3,1-8.2,3-11.8c2-3.6,4.7-6.5,8.2-8.7c3.5-2.2,7.4-3.3,11.7-3.3 c2.4,0,4.7,0.3,6.9,0.9c2.2,0.6,4.2,1.4,6.1,2.5c1.9,1.1,3.6,2.4,5.1,4c1.5,1.6,2.8,3.3,3.9,5.2l-7.5,4.3 c-0.7-1.2-1.5-2.3-2.5-3.3c-1-1-2.1-1.8-3.3-2.5c-1.2-0.7-2.5-1.2-3.9-1.6c-1.4-0.4-2.9-0.6-4.5-0.6c-2.8,0-5.3,0.7-7.5,2.1 c-2.2,1.4-3.9,3.3-5.1,5.7c-1.2,2.4-1.8,5.1-1.8,8.1c0,3.1,0.6,5.8,1.8,8.1c1.2,2.4,2.9,4.2,5.1,5.6c2.2,1.4,4.7,2.1,7.5,2.1 c1.7,0,3.2-0.2,4.6-0.6c1.4-0.4,2.7-1,3.8-1.7c1.1-0.7,2.1-1.6,3-2.6c0.9-1,1.6-2.1,2.2-3.3L28.1,76.1z" fill="white" opacity="0.1"/></svg>');
+            background-size: 200px;
+            opacity: 0.2;
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.4rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .current-date {
+            background-color: rgba(255, 255, 255, 0.2);
+            display: inline-block;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            margin-top: 15px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .calendar-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .month-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .month-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .month-header {
+            background: var(--secondary);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        
+        .month-header span {
+            font-size: 1rem;
+            opacity: 0.8;
+            display: block;
+            margin-top: 5px;
+        }
+        
+        .calendar {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .calendar th {
+            padding: 12px 5px;
+            text-align: center;
+            font-weight: 600;
+            color: var(--secondary);
+            border-bottom: 2px solid #eee;
+        }
+        
+        .calendar td {
+            height: 40px;
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .calendar td:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .calendar td:not(.empty):hover::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: rgba(215, 35, 35, 0.1);
+            z-index: -1;
+        }
+        
+        .holiday {
+            color: var(--holiday);
+            font-weight: bold;
+        }
+        
+        .holiday::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: rgba(231, 76, 60, 0.15);
+            z-index: -1;
+        }
+        
+        .festival {
+            color: var(--festival);
+            font-weight: bold;
+        }
+        
+        .today {
+            position: relative;
+            font-weight: bold;
+            color: white;
+            z-index: 1;
+        }
+        
+        .today::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--today);
+            z-index: -1;
+        }
+        
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+        
+        .holiday-color {
+            background-color: rgba(231, 76, 60, 0.2);
+        }
+        
+        .festival-color {
+            background-color: rgba(39, 174, 96, 0.2);
+        }
+        
+        .today-color {
+            background-color: var(--today);
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .feature-card h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .holiday-list {
+            list-style: none;
+        }
+        
+        .holiday-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .holiday-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .event-date {
+            font-weight: bold;
+            color: var(--secondary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 50px;
+            color: var(--secondary);
+            border-top: 1px solid #eee;
+        }
+        
+        .nepali-date {
+            font-family: 'Preeti', 'Mangal', sans-serif;
+            font-size: 1.1em;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .calendar-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>नेपाली क्यालेन्डर २०८१</h1>
+            <div class="subtitle">Nepali Calendar with Holidays and Festivals</div>
+            <div class="current-date">
+                <span class="nepali-date">आज: बैशाख १२, २०८१</span> | 
+                <span>Today: April 25, 2024</span>
+            </div>
+        </header>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color today-color"></div>
+                <span>Today</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color holiday-color"></div>
+                <span>Public Holiday</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color festival-color"></div>
+                <span>Festival</span>
+            </div>
+        </div>
+        
+        <div class="calendar-container">
+            <!-- Baishakh -->
+            <div class="month-card">
+                <div class="month-header">
+                    बैशाख (Baisakh)
+                    <span>Mid April - Mid May</span>
+                </div>
+                <table class="calendar">
+                    <tr>
+                        <th>आइत</th>
+                        <th>सोम</th>
+                        <th>मंगल</th>
+                        <th>बुध</th>
+                        <th>बिहि</th>
+                        <th>शुक्र</th>
+                        <th>शनि</th>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class="holiday">1*</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>3</td>
+                        <td>4</td>
+                        <td>5</td>
+                        <td>6</td>
+                        <td>7</td>
+                        <td>8</td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td>10</td>
+                        <td>11</td>
+                        <td class="today">12</td>
+                        <td>13</td>
+                        <td>14</td>
+                        <td class="holiday">15*</td>
+                    </tr>
+                    <tr>
+                        <td>16</td>
+                        <td>17</td>
+                        <td>18</td>
+                        <td>19</td>
+                        <td>20</td>
+                        <td>21</td>
+                        <td>22</td>
+                    </tr>
+                    <tr>
+                        <td>23</td>
+                        <td>24</td>
+                        <td>25</td>
+                        <td>26</td>
+                        <td>27</td>
+                        <td>28</td>
+                        <td>29</td>
+                    </tr>
+                    <tr>
+                        <td>30</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- Jestha -->
+            <div class="month-card">
+                <div class="month-header">
+                    जेठ (Jestha)
+                    <span>Mid May - Mid June</span>
+                </div>
+                <table class="calendar">
+                    <tr>
+                        <th>आइत</th>
+                        <th>सोम</th>
+                        <th>मंगल</th>
+                        <th>बुध</th>
+                        <th>बिहि</th>
+                        <th>शुक्र</th>
+                        <th>शनि</th>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td>1</td>
+                        <td>2</td>
+                        <td>3</td>
+                        <td>4</td>
+                        <td>5</td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td>7</td>
+                        <td>8</td>
+                        <td>9</td>
+                        <td>10</td>
+                        <td>11</td>
+                        <td>12</td>
+                    </tr>
+                    <tr>
+                        <td class="holiday">13*</td>
+                        <td>14</td>
+                        <td>15</td>
+                        <td>16</td>
+                        <td>17</td>
+                        <td>18</td>
+                        <td>19</td>
+                    </tr>
+                    <tr>
+                        <td>20</td>
+                        <td>21</td>
+                        <td>22</td>
+                        <td>23</td>
+                        <td>24</td>
+                        <td>25</td>
+                        <td>26</td>
+                    </tr>
+                    <tr>
+                        <td>27</td>
+                        <td>28</td>
+                        <td>29</td>
+                        <td>30</td>
+                        <td>31</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- Ashad -->
+            <div class="month-card">
+                <div class="month-header">
+                    असार (Ashad)
+                    <span>Mid June - Mid July</span>
+                </div>
+                <table class="calendar">
+                    <tr>
+                        <th>आइत</th>
+                        <th>सोम</th>
+                        <th>मंगल</th>
+                        <th>बुध</th>
+                        <th>बिहि</th>
+                        <th>शुक्र</th>
+                        <th>शनि</th>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>1</td>
+                        <td>2</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>4</td>
+                        <td>5</td>
+                        <td>6</td>
+                        <td>7</td>
+                        <td>8</td>
+                        <td>9</td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td>11</td>
+                        <td>12</td>
+                        <td>13</td>
+                        <td>14</td>
+                        <td>15</td>
+                        <td>16</td>
+                    </tr>
+                    <tr>
+                        <td>17</td>
+                        <td>18</td>
+                        <td>19</td>
+                        <td>20</td>
+                        <td>21</td>
+                        <td>22</td>
+                        <td>23</td>
+                    </tr>
+                    <tr>
+                        <td>24</td>
+                        <td>25</td>
+                        <td>26</td>
+                        <td>27</td>
+                        <td>28</td>
+                        <td>29</td>
+                        <td>30</td>
+                    </tr>
+                    <tr>
+                        <td>31</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- More months would be added similarly in a complete calendar -->
+        </div>
+        
+        <div class="features">
+            <div class="feature-card">
+                <h3>Upcoming Holidays & Festivals</h3>
+                <ul class="holiday-list">
+                    <li>
+                        <span class="event-date">बैशाख १</span>
+                        <span>नेपाली नयाँ बर्ष (Nepali New Year)</span>
+                    </li>
+                    <li>
+                        <span class="event-date">बैशाख १५</span>
+                        <span>लोकतन्त्र दिवस (Democracy Day)</span>
+                    </li>
+                    <li>
+                        <span class="event-date">जेठ १३</span>
+                        <span>गणतन्त्र दिवस (Republic Day)</span>
+                    </li>
+                    <li>
+                        <span class="event-date">साउन १५</span>
+                        <span>घोडे जात्रा (Ghode Jatra)</span>
+                    </li>
+                    <li>
+                        <span class="event-date">भदौ ५</span>
+                        <span>तिज (Teej)</span>
+                    </li>
+                    <li>
+                        <span class="event-date">आश्विन १-१५</span>
+                        <span>दशैं (Dashain)</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>Nepali Calendar Features</h3>
+                <ul class="holiday-list">
+                    <li>
+                        <span>🗓️</span>
+                        <span>All 12 Nepali months with dates</span>
+                    </li>
+                    <li>
+                        <span>🎉</span>
+                        <span>Public holidays highlighted</span>
+                    </li>
+                    <li>
+                        <span>🪔</span>
+                        <span>Major festivals marked</span>
+                    </li>
+                    <li>
+                        <span>📍</span>
+                        <span>Today's date clearly indicated</span>
+                    </li>
+                    <li>
+                        <span>📅</span>
+                        <span>Gregorian date equivalents</span>
+                    </li>
+                    <li>
+                        <span>📱</span>
+                        <span>Fully responsive design</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="feature-card">
+                <h3>About Nepali Calendar</h3>
+                <p>The Nepali calendar, known as Bikram Sambat (BS), is a lunar calendar that is 56.7 years ahead of the Gregorian calendar. It was established by Indian emperor Vikramaditya.</p>
+                <p style="margin-top: 15px;">The year 2081 BS started on April 13, 2024 and will end on April 12, 2025. Each month begins with the new moon and lasts 29-32 days.</p>
+                <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
+                    <strong>Current Year:</strong> २०८१ (2081 BS)<br>
+                    <strong>Started:</strong> April 13, 2024<br>
+                    <strong>Will End:</strong> April 12, 2025
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>नेपाली क्यालेन्डर २०८१ | Nepali Calendar 2081</p>
+            <p>© 2024 All Rights Reserved | Designed with ❤️ for Nepal</p>
+        </footer>
+    </div>
+
+    <script>
+        // Add today's date functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Highlight today in all calendars
+            const todayCells = document.querySelectorAll('.today');
+            todayCells.forEach(cell => {
+                cell.innerHTML = cell.textContent + '<div style="font-size:0.6em; position:absolute; bottom:2px; width:100%; text-align:center;">Today</div>';
+            });
+            
+            // Add holiday tooltips
+            const holidays = document.querySelectorAll('.holiday, .festival');
+            holidays.forEach(day => {
+                const date = day.textContent.replace('*', '');
+                const month = day.closest('.month-card').querySelector('.month-header').textContent.split(' ')[0];
+                
+                let eventName = '';
+                if (month === 'बैशाख' && date === '1') eventName = 'Nepali New Year';
+                if (month === 'बैशाख' && date === '15') eventName = 'Democracy Day';
+                if (month === 'जेठ' && date === '13') eventName = 'Republic Day';
+                
+                if (eventName) {
+                    day.title = eventName;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

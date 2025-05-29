@@ -3,552 +3,534 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ChatSphere - Chat</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <title>Private Chat | Modern Design</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <style>
     * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    :root {
+      --primary-gradient: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+      --sent-msg-gradient: linear-gradient(135deg, #4776E6 0%, #8E54E9 100%);
+      --received-msg-gradient: linear-gradient(135deg, #2C3E50 0%, #4A6491 100%);
+      --online-status: #00ff9d;
+      --offline-status: #ff4d6d;
     }
 
     body {
-      font-family: 'Inter', Arial, sans-serif;
-      background-color: #f4f7fc;
-      color: #1a1a1a;
-      transition: background-color 0.3s, color 0.3s;
-    }
-
-    body.dark-mode {
-      background-color: #1a1a1a;
-      color: #e0e0e0;
-    }
-
-    .header {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(-45deg, #0f2027, #203a43, #2c5364, #1d3557);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: center;
-      background: linear-gradient(135deg, #2a3f8f, #1c2a44);
+      min-height: 100vh;
+      justify-content: center;
+      overflow-x: hidden;
       color: white;
-      padding: 15px 30px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
     }
 
-    .profile {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .profile img {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid #ffffff33;
-      transition: transform 0.3s;
-    }
-
-    .profile img:hover {
-      transform: scale(1.1);
-    }
-
-    .profile span {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .theme-toggle {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: transform 0.3s;
-    }
-
-    .theme-toggle:hover {
-      transform: rotate(20deg);
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
     .chat-container {
+      width: 95%;
       max-width: 800px;
-      margin: 20px auto;
-      padding: 0 20px;
+      height: 85vh;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      backdrop-filter: blur(16px);
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.1),
+        0 0 30px rgba(100, 149, 237, 0.2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: translateY(20px);
+      opacity: 0;
+      animation: containerAppear 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      transition: transform 0.3s ease;
+    }
+
+    @keyframes containerAppear {
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     .chat-header {
       display: flex;
       align-items: center;
-      gap: 15px;
-      margin-bottom: 20px;
+      padding: 18px 25px;
+      background: rgba(255, 255, 255, 0.12);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .chat-header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0.3;
+      z-index: -1;
+    }
+
+    .chat-header .back-btn {
+      color: white;
+      font-size: 22px;
+      text-decoration: none;
+      margin-right: 18px;
+      transition: transform 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+    }
+
+    .chat-header .back-btn:hover {
+      transform: translateX(-3px);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      flex: 1;
     }
 
     .chat-header img {
-      width: 44px;
-      height: 44px;
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid #e0e0e033;
+      margin-right: 15px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
     }
 
-    .chat-header span {
-      font-size: 1.5rem;
+    .chat-header img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+
+    .user-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header .username {
+      font-size: 18px;
       font-weight: 600;
-      color: #2a3f8f;
+      letter-spacing: 0.5px;
     }
 
-    body.dark-mode .chat-header span {
-      color: #6b82ff;
+    .status-container {
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      margin-top: 3px;
+      opacity: 0.9;
     }
 
-    .status-indicator {
+    .status {
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background-color: #ccc;
-      transition: background-color 0.3s;
+      margin-right: 8px;
+      position: relative;
     }
 
-    .status-indicator.online {
-      background-color: #28a745;
-    }
-
-    .chat-messages {
-      background: white;
-      border-radius: 12px;
-      padding: 15px;
-      max-height: 60vh;
-      overflow-y: auto;
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
-      margin-bottom: 20px;
-    }
-
-    body.dark-mode .chat-messages {
-      background: #2a2a2a;
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
-    }
-
-    .message {
-      margin-bottom: 15px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .message.sent {
-      align-items: flex-end;
-    }
-
-    .message.received {
-      align-items: flex-start;
-    }
-
-    .message-text {
-      max-width: 70%;
-      padding: 10px 15px;
-      border-radius: 12px;
-      font-size: 1rem;
-    }
-
-    .message.sent .message-text {
-      background: #2a3f8f;
-      color: white;
-    }
-
-    .message.received .message-text {
-      background: #e0e0e0;
-      color: #1a1a1a;
-    }
-
-    body.dark-mode .message.received .message-text {
-      background: #3a3a3a;
-      color: #e0e0e0;
-    }
-
-    .message-timestamp {
-      font-size: 0.8rem;
-      color: #999;
-    }
-
-    body.dark-mode .message-timestamp {
-      color: #b0b0b0;
-    }
-
-    .chat-input {
-      display: flex;
-      gap: 10px;
-      background: white;
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    body.dark-mode .chat-input {
-      background: #2a2a2a;
-    }
-
-    .chat-input input {
-      border: none;
-      outline: none;
-      font-size: 1rem;
-      width: 100%;
-      background: transparent;
-      color: #1a1a1a;
-    }
-
-    body.dark-mode .chat-input input {
-      color: #e0e0e0;
-    }
-
-    .chat-input input::placeholder {
-      color: #999;
-    }
-
-    .chat-input button {
-      background: #2a3f8f;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.3s;
-    }
-
-    .chat-input button:hover {
-      background: #1c2a44;
-    }
-
-    .error-message {
-      color: #d32f2f;
-      font-size: 0.9rem;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    body.dark-mode .error-message {
-      color: #ef5350;
-    }
-
-    .skeleton-loader {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      background: white;
-      padding: 15px;
-      border-radius: 12px;
-      margin-bottom: 20px;
+    .status.online {
+      background: var(--online-status);
+      box-shadow: 0 0 8px var(--online-status);
       animation: pulse 1.5s infinite;
     }
 
-    body.dark-mode .skeleton-loader {
-      background: #2a2a2a;
-    }
-
-    .skeleton-loader .skeleton-text {
-      width: 70%;
-      height: 20px;
-      background: #e0e0e0;
-      border-radius: 8px;
+    .status.offline {
+      background: var(--offline-status);
     }
 
     @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
+      0% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0.7); }
+      70% { box-shadow: 0 0 0 8px rgba(0, 255, 157, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 255, 157, 0); }
     }
 
-    @media (max-width: 600px) {
-      .header {
-        padding: 10px 15px;
-      }
+    .chat-body {
+      flex: 1;
+      padding: 25px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      position: relative;
+    }
 
-      .profile img {
+    .chat-body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://www.transparenttextures.com/patterns/diagmonds-light.png');
+      opacity: 0.05;
+      z-index: -1;
+    }
+
+    .message {
+      max-width: 75%;
+      padding: 15px 20px;
+      border-radius: 20px;
+      color: white;
+      font-size: 16px;
+      line-height: 1.5;
+      position: relative;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      transform: translateY(20px);
+      opacity: 0;
+      animation: messageAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      transition: transform 0.3s ease;
+    }
+
+    @keyframes messageAppear {
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .message.sent {
+      background: var(--sent-msg-gradient);
+      align-self: flex-end;
+      border-bottom-right-radius: 5px;
+    }
+
+    .message.received {
+      background: var(--received-msg-gradient);
+      align-self: flex-start;
+      border-bottom-left-radius: 5px;
+    }
+
+    .message .timestamp {
+      font-size: 11px;
+      opacity: 0.8;
+      text-align: right;
+      margin-top: 8px;
+    }
+
+    .chat-footer {
+      display: flex;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .chat-footer input {
+      flex: 1;
+      padding: 16px 22px;
+      border-radius: 30px;
+      border: none;
+      background: rgba(255, 255, 255, 0.12);
+      color: white;
+      outline: none;
+      backdrop-filter: blur(10px);
+      font-size: 16px;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .chat-footer input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .chat-footer input:focus {
+      background: rgba(255, 255, 255, 0.18);
+      box-shadow: 
+        inset 0 0 10px rgba(0, 0, 0, 0.1),
+        0 0 15px rgba(100, 149, 237, 0.3);
+    }
+
+    .chat-footer button {
+      margin-left: 15px;
+      padding: 16px 30px;
+      border: none;
+      border-radius: 30px;
+      background: var(--primary-gradient);
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 5px 15px rgba(37, 117, 252, 0.4);
+    }
+
+    .chat-footer button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(37, 117, 252, 0.6);
+    }
+
+    .chat-footer button:active {
+      transform: translateY(0);
+      box-shadow: 0 3px 10px rgba(37, 117, 252, 0.4);
+    }
+
+    .chat-footer button i {
+      margin-right: 8px;
+      font-size: 18px;
+    }
+
+    .footer {
+      text-align: center;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 14px;
+      margin: 25px 0 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .footer p {
+      margin: 5px 0;
+    }
+
+    .footer a {
+      color: #4cc9f0;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .footer a:hover {
+      color: #90e0ef;
+      text-decoration: underline;
+    }
+
+    /* Scrollbar styling */
+    .chat-body::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .chat-body::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+    }
+
+    .chat-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+    }
+
+    .chat-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .chat-container {
+        height: 92vh;
+        border-radius: 15px;
+      }
+      
+      .chat-header {
+        padding: 15px;
+      }
+      
+      .chat-body {
+        padding: 15px;
+      }
+      
+      .message {
+        max-width: 85%;
+        padding: 12px 16px;
+      }
+      
+      .chat-footer {
+        padding: 15px;
+      }
+      
+      .chat-footer input {
+        padding: 14px 18px;
+      }
+      
+      .chat-footer button {
+        padding: 14px 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        justify-content: flex-start;
+        padding-top: 10px;
+      }
+      
+      .chat-container {
+        height: 95vh;
+        width: 98%;
+      }
+      
+      .chat-header img {
         width: 40px;
         height: 40px;
       }
-
-      .profile span {
-        font-size: 1rem;
+      
+      .message {
+        max-width: 90%;
       }
-
-      .chat-container {
-        padding: 0 15px;
+      
+      .chat-footer button span {
+        display: none;
       }
-
-      .chat-header img {
-        width: 36px;
-        height: 36px;
-      }
-
-      .chat-header span {
-        font-size: 1.3rem;
-      }
-
-      .chat-messages {
-        padding: 12px;
-      }
-
-      .chat-input {
-        padding: 8px;
-      }
-
-      .chat-input button {
-        padding: 8px 15px;
+      
+      .chat-footer button i {
+        margin-right: 0;
       }
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="profile">
-      <img id="profileImage" src="profile.png" alt="Profile" aria-label="User profile picture">
-      <span id="username">Loading...</span>
-    </div>
-    <button class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
-  </div>
-
   <div class="chat-container">
     <div class="chat-header">
-      <img id="otherUserImage" src="profile.png" alt="Other user profile picture">
-      <span id="otherUsername">Loading...</span>
-      <div class="status-indicator" id="otherUserStatus" title="Offline"></div>
-    </div>
-    <div id="errorMessage" class="error-message" style="display: none;"></div>
-    <div class="chat-messages" id="chatMessages">
-      <div class="skeleton-loader">
-        <div class="skeleton-text"></div>
-        <div class="skeleton-text"></div>
+      <a href="dash.html" class="back-btn"><i class="fas fa-arrow-left"></i></a>
+      <div class="user-info">
+        <img id="recipientIcon" src="" alt="Recipient">
+        <div class="user-details">
+          <div class="username" id="recipientUsername"></div>
+          <div class="status-container">
+            <span id="recipientStatus" class="status"></span>
+            <span id="statusText"></span>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="chat-input">
-      <input type="text" id="messageInput" placeholder="Type a message..." aria-label="Type a message">
-      <button id="sendButton">Send</button>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-footer">
+      <input type="text" id="messageInput" placeholder="Type your message..." />
+      <button onclick="sendMessage()">
+        <i class="fas fa-paper-plane"></i>
+        <span>Send</span>
+      </button>
     </div>
+  </div>
+  <div class="footer">
+    <p>© Ajay Kafle @2025 | Modern Chat Interface</p>
+    <p>Designed with ❤️ using HTML, CSS & JavaScript</p>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
-    import { getDatabase, ref, set, onValue, onDisconnect } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-database.js";
+    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
       authDomain: "signin-cdeed.firebaseapp.com",
       projectId: "signin-cdeed",
-      storageBucket: "signin-cdeed.appspot.com",
+      storageBucket: "signin-cdeed.firebasestorage.app",
       messagingSenderId: "481847681739",
       appId: "1:481847681739:web:13b28ef686bc29f201714e",
-      databaseURL: "https://signin-cdeed-default-rtdb.firebaseio.com"
+      measurementId: "G-L8F15D37BE"
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getFirestore(app);
+    const auth = getAuth(app);
     const rtdb = getDatabase(app);
 
-    const profileImage = document.getElementById('profileImage');
-    const usernameSpan = document.getElementById('username');
-    const otherUserImage = document.getElementById('otherUserImage');
-    const otherUsernameSpan = document.getElementById('otherUsername');
-    const otherUserStatus = document.getElementById('otherUserStatus');
-    const chatMessages = document.getElementById('chatMessages');
-    const messageInput = document.getElementById('messageInput');
-    const sendButton = document.getElementById('sendButton');
-    const errorMessage = document.getElementById('errorMessage');
+    let currentUserId;
+    const recipientId = new URLSearchParams(window.location.search).get("uid");
 
-    let currentUserId = null;
-    let otherUserId = null;
-
-    // Get other user ID from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    otherUserId = urlParams.get('uid');
-
-    // Theme toggle functionality
-    const themeToggle = document.querySelector('.theme-toggle');
-    themeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-    });
-
-    // Load saved theme
-    if (localStorage.getItem('theme') === 'dark') {
-      document.body.classList.add('dark-mode');
-      themeToggle.textContent = '☀️';
-    }
-
-    // Format timestamp
-    const formatTimestamp = (timestamp) => {
-      const date = new Date(timestamp);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    };
-
-    // Render messages
-    const renderMessages = (messages) => {
-      chatMessages.innerHTML = '';
-      messages.forEach(msg => {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${msg.senderId === currentUserId ? 'sent' : 'received'}`;
-        messageDiv.innerHTML = `
-          <div class="message-text">${msg.text}</div>
-          <div class="message-timestamp">${formatTimestamp(msg.timestamp)}</div>
-        `;
-        chatMessages.appendChild(messageDiv);
-      });
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-
-    // Send message
-    sendButton.addEventListener('click', async () => {
-      const text = messageInput.value.trim();
-      if (!text) return;
-
-      const chatId = [currentUserId, otherUserId].sort().join('_');
-      try {
-        await addDoc(collection(db, `chats/chat_${chatId}/messages`), {
-          senderId: currentUserId,
-          text,
-          timestamp: Date.now()
-        });
-        messageInput.value = '';
-      } catch (error) {
-        console.error('Failed to send message:', error.message);
-        errorMessage.textContent = 'Error sending message: ' + error.message;
-        errorMessage.style.display = 'block';
-      }
-    });
-
-    // Allow sending message with Enter key
-    messageInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        sendButton.click();
-      }
-    });
-
-    onAuthStateChanged(auth, async (user) => {
+    // Authenticate user
+    onAuthStateChanged(auth, (user) => {
       if (user) {
         currentUserId = user.uid;
-
-        // Save or update user data in Firestore
-        const userDocRef = doc(db, 'users', user.uid);
-        try {
-          const userDoc = await getDoc(userDocRef);
-          if (!userDoc.exists()) {
-            // Create new user document with default values
-            await setDoc(userDocRef, {
-              username: user.displayName || `User_${user.uid.slice(0, 8)}`,
-              profilePicUrl: 'profile.png',
-              email: user.email || '',
-              createdAt: Date.now()
-            });
-          } else {
-            // Update existing document to ensure username and profilePicUrl are set
-            const data = userDoc.data();
-            await setDoc(userDocRef, {
-              username: data.username || user.displayName || `User_${user.uid.slice(0, 8)}`,
-              profilePicUrl: data.profilePicUrl || 'profile.png',
-              email: user.email || data.email || '',
-              updatedAt: Date.now()
-            }, { merge: true });
-          }
-        } catch (error) {
-          console.error('Error saving user data to Firestore:', error.message);
-          errorMessage.textContent = 'Error saving user data: ' + error.message;
-          errorMessage.style.display = 'block';
-        }
-
-        // Set user online status
-        const statusRef = ref(rtdb, `status/${currentUserId}`);
-        await set(statusRef, {
-          state: 'online',
-          last_changed: Date.now()
-        });
-
-        // Set user offline when they disconnect
-        onDisconnect(statusRef).set({
-          state: 'offline',
-          last_changed: Date.now()
-        }).catch(error => {
-          console.error('Failed to set onDisconnect:', error.message);
-        });
-
-        // Load current user profile
-        try {
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            usernameSpan.textContent = data.username || 'User';
-            profileImage.src = data.profilePicUrl || 'profile.png';
-          } else {
-            usernameSpan.textContent = 'User';
-          }
-        } catch (error) {
-          console.error('Failed to fetch user profile:', error.message);
-          errorMessage.textContent = 'Error fetching user profile: ' + error.message;
-          errorMessage.style.display = 'block';
-        }
-
-        // Load other user profile
-        if (otherUserId) {
-          const otherUserDocRef = doc(db, 'users', otherUserId);
-          try {
-            const otherUserDoc = await getDoc(otherUserDocRef);
-            if (otherUserDoc.exists()) {
-              const data = otherUserDoc.data();
-              otherUsernameSpan.textContent = data.username || 'Unnamed User';
-              otherUserImage.src = data.profilePicUrl || 'profile.png';
-            } else {
-              otherUsernameSpan.textContent = 'Unnamed User';
-            }
-          } catch (error) {
-            console.error('Failed to fetch other user profile:', error.message);
-            errorMessage.textContent = 'Error fetching user profile: ' + error.message;
-            errorMessage.style.display = 'block';
-          }
-
-          // Monitor other user status
-          const otherStatusRef = ref(rtdb, `status/${otherUserId}`);
-          onValue(otherStatusRef, (snapshot) => {
-            const status = snapshot.val();
-            const isOnline = status && status.state === 'online';
-            otherUserStatus.className = `status-indicator ${isOnline ? 'online' : ''}`;
-            otherUserStatus.title = isOnline ? 'Online' : 'Offline';
-          }, (error) => {
-            console.error(`Failed to read status for ${otherUserId}:`, error.message);
-            errorMessage.textContent = 'Error fetching user status: ' + error.message;
-            errorMessage.style.display = 'block';
-          });
-
-          // Load chat messages
-          const chatId = [currentUserId, otherUserId].sort().join('_');
-          const messagesQuery = query(
-            collection(db, `chats/chat_${chatId}/messages`),
-            orderBy('timestamp', 'asc')
-          );
-          onSnapshot(messagesQuery, (snapshot) => {
-            const messages = [];
-            snapshot.forEach(doc => {
-              messages.push(doc.data());
-            });
-            renderMessages(messages);
-          }, (error) => {
-            console.error('Failed to fetch messages:', error.message);
-            errorMessage.textContent = 'Error fetching messages: ' + error.message;
-            errorMessage.style.display = 'block';
-          });
-        } else {
-          errorMessage.textContent = 'Invalid user ID in URL';
-          errorMessage.style.display = 'block';
-        }
+        loadRecipientData();
+        loadMessages();
       } else {
-        alert('You are not logged in!');
-        window.location.href = 'login.html';
+        window.location.href = "login.html";
+      }
+    });
+
+    // Load recipient's data from Firestore
+    function loadRecipientData() {
+      const recipientRef = doc(db, "users", recipientId);
+      onSnapshot(recipientRef, (doc) => {
+        if (doc.exists()) {
+          const data = doc.data();
+          document.getElementById("recipientUsername").textContent = data.username || "Unknown";
+          document.getElementById("recipientIcon").src = data.profilePicUrl || "https://via.placeholder.com/40";
+          document.getElementById("recipientStatus").className = `status ${data.isOnline ? 'online' : 'offline'}`;
+          document.getElementById("statusText").textContent = data.isOnline ? "Online" : "Offline";
+        } else {
+          console.error("Recipient not found");
+        }
+      }, (error) => {
+        console.error("Error fetching recipient data:", error);
+      });
+    }
+
+    // Load messages from Realtime Database
+    function loadMessages() {
+      const chatId = [currentUserId, recipientId].sort().join("_");
+      const messagesRef = ref(rtdb, `chats/${chatId}`);
+      onChildAdded(messagesRef, (snapshot) => {
+        const message = snapshot.val();
+        const messageElement = document.createElement("div");
+        messageElement.className = `message ${message.senderId === currentUserId ? 'sent' : 'received'}`;
+        messageElement.innerHTML = `
+          ${message.text}
+          <div class="timestamp">${new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+        `;
+        document.getElementById("chatBody").appendChild(messageElement);
+        document.getElementById("chatBody").scrollTop = document.getElementById("chatBody").scrollHeight;
+      });
+    }
+
+    // Send message
+    window.sendMessage = function () {
+      const messageInput = document.getElementById("messageInput");
+      const text = messageInput.value.trim();
+      if (text) {
+        const chatId = [currentUserId, recipientId].sort().join("_");
+        const messagesRef = ref(rtdb, `chats/${chatId}`);
+        push(messagesRef, {
+          senderId: currentUserId,
+          text: text,
+          timestamp: Date.now()
+        });
+        messageInput.value = "";
+      }
+    };
+
+    // Allow sending with Enter key
+    document.getElementById("messageInput").addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
       }
     });
   </script>

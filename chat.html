@@ -1,482 +1,540 @@
-<!DOCTYPE html>
+</body>
+</html><!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ChatSphere</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Messenger - Connect with Friends</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <style>
+    /* Modern CSS Reset */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Variables for consistent theming */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #8e44ad, #3498db);
+      --secondary-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      --card-bg: rgba(255, 255, 255, 0.08);
+      --card-hover: rgba(255, 255, 255, 0.15);
+      --text-primary: #ffffff;
+      --text-secondary: #d1d1d1;
+      --accent-color: #3498db;
+      --online-color: #2ecc71;
+      --offline-color: #e74c3c;
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+      --border-radius: 16px;
+      --transition: all 0.3s ease;
     }
 
     body {
-      font-family: 'Inter', Arial, sans-serif;
-      background-color: #f4f7fc;
-      color: #1a1a1a;
-      transition: background-color 0.3s, color 0.3s;
-    }
-
-    body.dark-mode {
-      background-color: #1a1a1a;
-      color: #e0e0e0;
-    }
-
-    .header {
+      background: var(--secondary-gradient);
+      color: var(--text-primary);
+      min-height: 100vh;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: center;
-      background: linear-gradient(135deg, #2a3f8f, #1c2a44);
-      color: white;
-      padding: 15px 30px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
     }
 
-    .profile {
+    /* Decorative background elements */
+    .bg-pattern {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 10% 20%, rgba(52, 152, 219, 0.05) 0%, transparent 20%),
+                  radial-gradient(circle at 90% 80%, rgba(142, 68, 173, 0.05) 0%, transparent 20%);
+      z-index: -1;
+    }
+
+    /* Main container */
+    .container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Header styling */
+    .header {
+      background: var(--primary-gradient);
+      padding: 20px 24px;
+      border-radius: var(--border-radius);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+      transform: rotate(30deg);
+      pointer-events: none;
+    }
+
+    .back-btn {
+      background: rgba(255, 255, 255, 0.15);
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      color: white;
+      font-size: 20px;
+      text-decoration: none;
+    }
+
+    .back-btn:hover {
+      transform: translateX(-3px);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .header-content {
+      text-align: center;
+      flex-grow: 1;
+    }
+
+    .header-title {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .header-subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .current-user {
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
-    .profile img {
+    #currentUserIcon {
       width: 48px;
       height: 48px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid #ffffff33;
-      transition: transform 0.3s;
+      border: 2px solid rgba(255,255,255,0.3);
+      box-shadow: var(--shadow-sm);
     }
 
-    .profile img:hover {
-      transform: scale(1.1);
-    }
-
-    .profile span {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .theme-toggle {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.2rem;
-      cursor: pointer;
-      transition: transform 0.3s;
-    }
-
-    .theme-toggle:hover {
-      transform: rotate(20deg);
-    }
-
-    .user-list {
-      max-width: 800px;
-      margin: 20px auto;
-      padding: 0 20px;
-    }
-
+    /* Search bar styling */
     .search-bar {
-      display: flex;
-      align-items: center;
-      background: white;
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    body.dark-mode .search-bar {
-      background: #2a2a2a;
-    }
-
-    .search-bar input {
-      border: none;
-      outline: none;
-      font-size: 1rem;
+      position: relative;
       width: 100%;
-      background: transparent;
-      color: #1a1a1a;
     }
 
-    body.dark-mode .search-bar input {
-      color: #e0e0e0;
+    .search-container {
+      position: relative;
+      width: 100%;
     }
 
-    .search-bar input::placeholder {
-      color: #999;
+    .search-icon {
+      position: absolute;
+      left: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 18px;
+      z-index: 2;
     }
 
-    .user-list h3 {
-      font-size: 1.5rem;
+    #searchInput {
+      width: 100%;
+      padding: 16px 20px 16px 52px;
+      border-radius: 50px;
+      border: none;
+      background: var(--card-bg);
+      color: var(--text-primary);
+      font-size: 16px;
+      outline: none;
+      backdrop-filter: blur(10px);
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+
+    #searchInput:focus {
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.4);
+    }
+
+    #searchInput::placeholder {
+      color: var(--text-secondary);
+    }
+
+    /* Users container */
+    .users-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .section-title {
+      font-size: 18px;
       font-weight: 600;
-      margin-bottom: 20px;
-      color: #2a3f8f;
-    }
-
-    body.dark-mode .user-list h3 {
-      color: #6b82ff;
-    }
-
-    .user {
+      margin-bottom: 8px;
+      padding-left: 12px;
       display: flex;
       align-items: center;
-      gap: 15px;
-      background: white;
-      padding: 15px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.05);
+      gap: 8px;
+    }
+
+    .section-title i {
+      color: var(--accent-color);
+    }
+
+    /* User card styling */
+    .user-card {
+      display: flex;
+      align-items: center;
+      padding: 16px;
+      background: var(--card-bg);
+      border-radius: var(--border-radius);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.05);
     }
 
-    body.dark-mode .user {
-      background: #2a2a2a;
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    .user-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--primary-gradient);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: var(--transition);
     }
 
-    .user:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    .user-card:hover {
+      background: var(--card-hover);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
     }
 
-    .user img {
-      width: 44px;
-      height: 44px;
+    .user-card:hover::before {
+      transform: scaleY(1);
+    }
+
+    .user-avatar {
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid #e0e0e033;
+      border: 2px solid rgba(255,255,255,0.2);
+      margin-right: 16px;
+      position: relative;
+      transition: var(--transition);
     }
 
-    .user span {
-      font-size: 1rem;
-      font-weight: 500;
+    .user-card:hover .user-avatar {
+      transform: scale(1.05);
+      border-color: rgba(255,255,255,0.4);
+    }
+
+    .user-info {
+      flex-grow: 1;
+    }
+
+    .user-name {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .user-status {
+      font-size: 14px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .status-indicator {
+      display: inline-block;
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      margin-left: auto;
-      background-color: #ccc;
-      transition: background-color 0.3s;
+      position: relative;
     }
 
     .status-indicator.online {
-      background-color: #28a745;
+      background: var(--online-color);
+      box-shadow: 0 0 8px var(--online-color);
     }
 
-    .skeleton-loader {
+    .status-indicator.offline {
+      background: var(--offline-color);
+    }
+
+    .action-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
       display: flex;
       align-items: center;
-      gap: 15px;
-      background: white;
-      padding: 15px;
-      border-radius: 12px;
-      margin-bottom: 12px;
-      animation: pulse 1.5s infinite;
+      justify-content: center;
+      color: var(--accent-color);
+      font-size: 18px;
+      transition: var(--transition);
     }
 
-    body.dark-mode .skeleton-loader {
-      background: #2a2a2a;
+    .user-card:hover .action-icon {
+      background: var(--accent-color);
+      color: white;
+      transform: rotate(-15deg);
     }
 
-    .skeleton-loader .skeleton-img {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: #e0e0e0;
-    }
-
-    .skeleton-loader .skeleton-text {
-      width: 150px;
-      height: 16px;
-      background: #e0e0e0;
-      border-radius: 4px;
-    }
-
-    .error-message {
-      color: #d32f2f;
-      font-size: 0.9rem;
-      margin-bottom: 20px;
+    /* Footer styling */
+    .footer {
       text-align: center;
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-top: 40px;
+      padding: 20px;
+      width: 100%;
+      position: relative;
     }
 
-    body.dark-mode .error-message {
-      color: #ef5350;
+    .footer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
     }
 
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.5; }
-      100% { opacity: 1; }
-    }
-
+    /* Responsive adjustments */
     @media (max-width: 600px) {
       .header {
-        padding: 10px 15px;
+        padding: 16px;
+        flex-direction: column;
+        gap: 16px;
       }
-
-      .profile img {
-        width: 40px;
-        height: 40px;
+      
+      .header-content {
+        order: -1;
       }
-
-      .profile span {
-        font-size: 1rem;
+      
+      .current-user {
+        position: absolute;
+        top: 16px;
+        right: 16px;
       }
-
-      .user-list {
-        padding: 0 15px;
+      
+      .back-btn {
+        position: absolute;
+        top: 16px;
+        left: 16px;
       }
-
-      .search-bar {
-        padding: 8px;
+      
+      .user-name {
+        font-size: 16px;
       }
-
-      .user {
-        padding: 12px;
-      }
-
-      .user img {
-        width: 36px;
-        height: 36px;
-      }
-
-      .user span {
-        font-size: 0.95rem;
+      
+      .user-avatar {
+        width: 48px;
+        height: 48px;
       }
     }
+
+    /* Animation for initial load */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .header, .search-bar, .section-title, .user-card {
+      animation: fadeIn 0.6s ease-out forwards;
+    }
+
+    .user-card:nth-child(1) { animation-delay: 0.1s; }
+    .user-card:nth-child(2) { animation-delay: 0.2s; }
+    .user-card:nth-child(3) { animation-delay: 0.3s; }
+    .user-card:nth-child(4) { animation-delay: 0.4s; }
+    .user-card:nth-child(5) { animation-delay: 0.5s; }
+    .user-card:nth-child(6) { animation-delay: 0.6s; }
+    .user-card:nth-child(7) { animation-delay: 0.7s; }
+    .user-card:nth-child(8) { animation-delay: 0.8s; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="profile">
-      <img id="profileImage" src="profile.png" alt="Profile" aria-label="User profile picture">
-      <span id="username">Loading...</span>
+  <!-- Decorative background -->
+  <div class="bg-pattern"></div>
+  
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <a href="dash.html" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+      </a>
+      
+      <div class="header-content">
+        <div class="header-title">Messenger</div>
+        <div class="header-subtitle">Connect with friends</div>
+      </div>
+      
+      <div class="current-user">
+        <img id="currentUserIcon" src="https://via.placeholder.com/48" alt="Current User">
+      </div>
     </div>
-    <button class="theme-toggle" aria-label="Toggle dark mode">🌙</button>
-  </div>
-
-  <div class="user-list" id="userList">
-    <h3>Chat with others</h3>
+    
+    <!-- Search bar -->
     <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Search users..." aria-label="Search users by username">
+      <div class="search-container">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" placeholder="Search users..." id="searchInput" />
+      </div>
     </div>
-    <div id="errorMessage" class="error-message" style="display: none;"></div>
-    <div class="skeleton-loader">
-      <div class="skeleton-img"></div>
-      <div class="skeleton-text"></div>
-    </div>
-    <div class="skeleton-loader">
-      <div class="skeleton-img"></div>
-      <div class="skeleton-text"></div>
+    
+    <!-- Users container -->
+    <div id="userContainer" class="users-container">
+      <div class="section-title">
+        <i class="fas fa-users"></i>
+        <span>All Contacts</span>
+      </div>
     </div>
   </div>
+  
+  <!-- Footer -->
+  <div class="footer">© Ajay Kafle @2025</div>
 
-  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
-    import { getFirestore, doc, getDoc, getDocs, collection } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
-    import { getDatabase, ref, set, onValue, onDisconnect, get } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
       authDomain: "signin-cdeed.firebaseapp.com",
       projectId: "signin-cdeed",
-      storageBucket: "signin-cdeed.appspot.com",
+      storageBucket: "signin-cdeed.firebasestorage.app",
       messagingSenderId: "481847681739",
       appId: "1:481847681739:web:13b28ef686bc29f201714e",
-      databaseURL: "https://signin-cdeed-default-rtdb.firebaseio.com"
+      measurementId: "G-L8F15D37BE"
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getFirestore(app);
-    const rtdb = getDatabase(app);
+    const auth = getAuth(app);
 
-    const profileImage = document.getElementById('profileImage');
-    const usernameSpan = document.getElementById('username');
-    const userList = document.getElementById('userList');
-    const searchInput = document.getElementById('searchInput');
-    const errorMessage = document.getElementById('errorMessage');
-
-    let currentUserId = null;
-    let allUsers = [];
-
-    // Check Realtime Database connectivity
-    const checkDatabaseConnection = async () => {
-      try {
-        const testRef = ref(rtdb, '.info/connected');
-        onValue(testRef, (snapshot) => {
-          if (snapshot.val() === true) {
-            console.log('Connected to Realtime Database');
-            errorMessage.style.display = 'none';
-          } else {
-            console.warn('Disconnected from Realtime Database');
-            errorMessage.textContent = 'Unable to connect to status updates. Please check your network.';
-            errorMessage.style.display = 'block';
-          }
-        });
-      } catch (error) {
-        console.error('Database connection error:', error.message);
-        errorMessage.textContent = 'Error connecting to status updates: ' + error.message;
-        errorMessage.style.display = 'block';
-      }
-    };
-
-    // Theme toggle functionality
-    const themeToggle = document.querySelector('.theme-toggle');
-    themeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      themeToggle.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-      localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-    });
-
-    // Load saved theme
-    if (localStorage.getItem('theme') === 'dark') {
-      document.body.classList.add('dark-mode');
-      themeToggle.textContent = '☀️';
-    }
-
-    // Keyboard accessibility for user list
-    const focusUser = (userDiv) => {
-      userDiv.setAttribute('tabindex', '0');
-      userDiv.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          userDiv.click();
-        }
-      });
-    };
-
-    // Search functionality
-    searchInput.addEventListener('input', () => {
-      const query = searchInput.value.toLowerCase();
-      renderUsers(allUsers.filter(user => user.username.toLowerCase().includes(query)));
-    });
-
-    // Render users
-    const renderUsers = (users) => {
-      userList.innerHTML = `
-        <h3>Chat with others</h3>
-        <div class="search-bar">
-          <input type="text" id="searchInput" placeholder="Search users..." aria-label="Search users by username">
-        </div>
-        <div id="errorMessage" class="error-message" style="display: ${errorMessage.style.display};">${errorMessage.textContent}</div>
-      `;
-      users.forEach(user => {
-        const userDiv = document.createElement('div');
-        userDiv.className = 'user';
-        userDiv.setAttribute('aria-label', `Chat with ${user.username || 'Unnamed User'}`);
-        userDiv.innerHTML = `
-          <img src="${user.profilePicUrl || 'profile.png'}" alt="${user.username || 'Unnamed User'}'s profile picture">
-          <span>${user.username || 'Unnamed User'}</span>
-          <div class="status-indicator" id="status-${user.uid}" title="Offline"></div>
-        `;
-        userDiv.onclick = () => {
-          window.location.href = `chat1.html?uid=${user.uid}`;
-        };
-        focusUser(userDiv);
-        userList.appendChild(userDiv);
-
-        // Listen for status updates
-        const statusRef = ref(rtdb, `status/${user.uid}`);
-        onValue(statusRef, (snapshot) => {
-          const status = snapshot.val();
-          const statusIndicator = document.getElementById(`status-${user.uid}`);
-          if (statusIndicator) {
-            const isOnline = status && status.state === 'online';
-            statusIndicator.className = `status-indicator ${isOnline ? 'online' : ''}`;
-            statusIndicator.title = isOnline ? 'Online' : 'Offline';
-          }
-          console.log(`Status for ${user.uid}:`, status || 'No status data');
-        }, (error) => {
-          console.error(`Failed to read status for ${user.uid}:`, error.message);
-          errorMessage.textContent = 'Error fetching user statuses: ' + error.message;
-          errorMessage.style.display = 'block';
-        });
-      });
-      // Reattach search input event listener
-      document.getElementById('searchInput').value = searchInput.value;
-      document.getElementById('searchInput').addEventListener('input', () => {
-        const query = document.getElementById('searchInput').value.toLowerCase();
-        renderUsers(allUsers.filter(user => user.username.toLowerCase().includes(query)));
-      });
-    };
-
-    onAuthStateChanged(auth, async (user) => {
+    // Display current user's profile icon
+    onAuthStateChanged(auth, (user) => {
       if (user) {
-        currentUserId = user.uid;
-
-        // Set user online status
-        const userStatusRef = ref(rtdb, `status/${user.uid}`);
-        try {
-          await set(userStatusRef, { state: 'online', last_changed: Date.now() });
-          console.log(`Set status to online for user ${user.uid}`);
-          onDisconnect(userStatusRef).set({ state: 'offline', last_changed: Date.now() })
-            .then(() => console.log(`onDisconnect set for user ${user.uid}`))
-            .catch(error => {
-              console.error(`Failed to set onDisconnect for ${user.uid}:`, error.message);
-              errorMessage.textContent = 'Error setting status updates: ' + error.message;
-              errorMessage.style.display = 'block';
-            });
-        } catch (error) {
-          console.error(`Failed to set online status for ${user.uid}:`, error.message);
-          errorMessage.textContent = 'Error setting user status: ' + error.message;
-          errorMessage.style.display = 'block';
-        }
-
-        const userDocRef = doc(db, 'users', user.uid);
-        try {
-          const userDoc = await getDoc(userDocRef);
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            usernameSpan.textContent = data.username || "User";
-            profileImage.src = data.profilePicUrl || "profile.png";
-          } else {
-            usernameSpan.textContent = "User";
-          }
-        } catch (error) {
-          console.error("Failed to fetch user profile:", error.message);
-          errorMessage.textContent = 'Error fetching user profile: ' + error.message;
-          errorMessage.style.display = 'block';
-        }
-
-        // Load all users except the current one
-        allUsers = [];
-        try {
-          const querySnapshot = await getDocs(collection(db, 'users'));
-          querySnapshot.forEach(docSnap => {
-            const userData = docSnap.data();
-            const uid = docSnap.id;
-            if (uid !== currentUserId) {
-              allUsers.push({
-                uid,
-                username: userData.username || 'Unnamed User',
-                profilePicUrl: userData.profilePicUrl || 'profile.png'
-              });
+        const userRef = collection(db, "users");
+        onSnapshot(userRef, (snapshot) => {
+          snapshot.forEach((doc) => {
+            if (doc.id === user.uid) {
+              const userData = doc.data();
+              document.getElementById("currentUserIcon").src = userData.profilePicUrl || "https://via.placeholder.com/48";
             }
           });
-          renderUsers(allUsers);
-        } catch (error) {
-          console.error("Failed to fetch users:", error.message);
-          errorMessage.textContent = 'Error fetching users: ' + error.message;
-          errorMessage.style.display = 'block';
-        }
-
-        // Check database connection
-        checkDatabaseConnection();
+        });
+        displayUsers(user.uid);
       } else {
-        alert("You are not logged in!");
         window.location.href = "login.html";
       }
     });
+
+    function displayUsers(currentUserId) {
+      const userContainer = document.getElementById('userContainer');
+      const searchInput = document.getElementById('searchInput');
+      const usersRef = collection(db, 'users');
+      const users = [];
+
+      onSnapshot(usersRef, (querySnapshot) => {
+        users.length = 0; // Clear array
+        querySnapshot.forEach((doc) => {
+          if (doc.id !== currentUserId) { // Exclude current user
+            const data = doc.data();
+            users.push({
+              id: doc.id,
+              username: data.username || 'Unknown',
+              profilePicUrl: data.profilePicUrl || 'https://via.placeholder.com/56',
+              isOnline: data.isOnline || false
+            });
+          }
+        });
+
+        function renderList(filteredUsers) {
+          // Clear existing user cards
+          const userCards = userContainer.querySelectorAll('.user-card');
+          userCards.forEach(card => card.remove());
+
+          filteredUsers.forEach((user, index) => {
+            const card = document.createElement('div');
+            card.className = 'user-card';
+            card.style.animationDelay = `${(index + 1) * 0.1}s`;
+            card.innerHTML = `
+              <img src="${user.profilePicUrl}" alt="${user.username}" class="user-avatar">
+              <div class="user-info">
+                <div class="user-name">${user.username}</div>
+                <div class="user-status">
+                  <span class="status-indicator ${user.isOnline ? 'online' : 'offline'}"></span>
+                  ${user.isOnline ? 'Online now' : 'Offline'}
+                </div>
+              </div>
+              <div class="action-icon">
+                <i class="fas fa-comment"></i>
+              </div>
+            `;
+            card.onclick = () => {
+              window.location.href = `chat1.html?uid=${user.id}`;
+            };
+            userContainer.appendChild(card);
+          });
+        }
+
+        // Initial render
+        renderList(users);
+
+        // Search functionality
+        searchInput.addEventListener('input', () => {
+          const term = searchInput.value.toLowerCase();
+          const filtered = users.filter(user => user.username.toLowerCase().includes(term));
+          renderList(filtered);
+        });
+      }, (error) => {
+        console.error('Error loading users:', error);
+      });
+    }
   </script>
 </body>
 </html>
