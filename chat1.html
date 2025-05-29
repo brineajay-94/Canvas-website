@@ -443,7 +443,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
-    import { getFirestore, doc, onSnapshot, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
     import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-database.js";
 
@@ -487,12 +487,12 @@
         loadRecipientData();
         loadMessages();
 
-        // Handle disconnection (user closes tab or logs out)
+        // Handle disconnection
         window.addEventListener('beforeunload', async () => {
           await updateUserStatus(currentUserId, false);
         });
 
-        // Optional: Update status to offline when user logs out
+        // Update status on logout
         auth.onAuthStateChanged((user) => {
           if (!user) {
             updateUserStatus(currentUserId, false);
