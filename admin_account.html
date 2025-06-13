@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Manage Files</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
+            authDomain: "signin-cdeed.firebaseapp.com",
+            projectId: "signin-cdeed",
+            storageBucket: "signin-cdeed.firebasestorage.app",
+            messagingSenderId: "481847681739",
+            appId: "1:481847681739:web:13b28ef686bc29f201714e",
+            measurementId: "G-L8F15D37BE"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Supabase client initialization
+        const supabaseClient = window.supabase.createClient(
+            'https://jxfwqcvdmvepfnrfauoe.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZndxY3ZkbXZlcGZucmZhdW9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NDEzNDEsImV4cCI6MjA2MzAxNzM0MX0.JVZdY8iz_fk2KkiufoYbL49VHtblRq5OhA6pPMonWyY'
+        );
+
+        // DOM elements
+        const uploadSection = document.getElementById('uploadSection');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const fileList = document.getElementById('fileList');
+
+        // Static user ID and username for anonymous access
+        const staticUserId = 'anonymous_user';
+        const staticUsername = 'Admin';
+
+        // Supported image extensions for display
+        const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+
+        // Function to check if a file is an image
+        function isImageFile(filename) {
+            return IMAGE_EXTENSIONS.some(ext => filename.toLowerCase().endsWith(ext));
+        }
+
+        // Function to get appropriate file icon
+        function getFileIcon(filename) {
+            if (filename.toLowerCase().endsWith('.zip')) return 'fa-file-zip';
+            if (filename.toLowerCase().endsWith('.ppt') || filename.toLowerCase().endsWith('.pptx')) return 'fa-file-powerpoint';
+            if (filename.toLowerCase().endsWith('.docx')) return 'fa-file-word';
+            return 'fa-file-alt';
+        }
+
+        // File upload handling
+        uploadBtn.addEventListener('click', async () => {
+            const files = fileInput.files;
+            if (!files.length) {
+                uploadStatus.textContent = 'Please select at least one file.';
+                uploadStatus.className = 'error-message';
+                return;
+            }
+
+            uploadStatus.textContent = 'Uploading...';
+            uploadStatus.className = 'loader';
+            uploadBtn.disabled = true;
+
+            try {
+                for (const file of files) {
+                    // Validate file size (max 10MB)
+                    if (file.size > 10 * 1024 * 1024) {
+                        uploadStatus.textContent = `File ${file.name} is too large (max 10MB).`;
+                        uploadStatus.className = 'error-message';
+                        continue;
+                    }
+
+                    // Generate unique filename
+                    const filePath = `${Date.now()}_${file.name}`;
+
+                    // Upload to Supabase
+                    const { data, error } = await supabaseClient.storage
+                        .from('account')
+                        .upload(filePath, file, {
+                            cacheControl: '3600',
+                            upsert: false
+                        });
+
+                    if (error) {
+                        uploadStatus.textContent = `Failed to upload ${file.name}: ${error.message}`;
+                        uploadStatus.className = 'error-message';
+                        console.error('Upload error:', error);
+                        continue;
+                    }
+
+                    // Store metadata in Firestore
+                    await addDoc(collection(db, 'users', staticUserId, 'files'), {
+                        filename: filePath,
+                        username: staticUsername,
+                        uploadTime: new Date().toISOString()
+                    });
+
+                    uploadStatus.textContent = `Successfully uploaded ${file.name}`;
+                    uploadStatus.className = 'success-message';
+                }
+
+                // Clear input and reload files
+                fileInput.value = '';
+                loadUserFiles();
+                setTimeout(() => {
+                    uploadStatus.textContent = '';
+                }, 3000);
+
+            } catch (error) {
+                uploadStatus.textContent = 'Upload failed. Please try again.';
+                uploadStatus.className = 'error-message';
+                console.error('Upload error:', error);
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        });
+
+        // Function to load files
+        async function loadUserFiles() {
+            try {
+                const filesSnapshot = await getDocs(collection(db, 'users', staticUserId, 'files'));
+                const filesData = [];
+
+                for (const doc of filesSnapshot.docs) {
+                    const data = doc.data();
+                    const { publicUrl } = supabaseClient.storage.from('account').getPublicUrl(data.filename).data;
+                    filesData.push({
+                        id: doc.id,
+                        url: publicUrl,
+                        name: data.filename,
+                        username: data.username,
+                        uploadTime: data.uploadTime,
+                        isImage: isImageFile(data.filename)
+                    });
+                }
+
+                renderFiles(filesData);
+            } catch (error) {
+                fileList.innerHTML = '<p class="error-message">Failed to load files. Please try again.</p>';
+                console.error('Error loading files:', error);
+            }
+        }
+
+        // Function to delete a file
+        async function deleteFile(fileId, fileName) {
+            try {
+                // Delete from Supabase
+                const { error: storageError } = await supabaseClient.storage
+                    .from('account')
+                    .remove([fileName]);
+
+                if (storageError) throw storageError;
+
+                // Delete from Firestore
+                await deleteDoc(doc(db, 'users', staticUserId, 'files', fileId));
+
+                uploadStatus.textContent = `Successfully deleted ${fileName}`;
+                uploadStatus.className = 'success-message';
+                setTimeout(() => {
+                    uploadStatus.textContent = '';
+                }, 3000);
+
+                // Reload files
+                loadUserFiles();
+            } catch (error) {
+                uploadStatus.textContent = `Failed to delete ${fileName}. Please try again.`;
+                uploadStatus.className = 'error-message';
+                console.error('Delete error:', error);
+            }
+        }
+
+        // Function to render files
+        function renderFiles(files) {
+            fileList.innerHTML = '';
+
+            if (files.length === 0) {
+                fileList.innerHTML = '<p class="no-files">No files uploaded yet.</p>';
+                return;
+            }
+
+            files.forEach(file => {
+                const card = document.createElement('div');
+                card.className = 'file-card';
+                const isImage = file.isImage;
+
+                card.innerHTML = `
+                    <div class="card-file-container">
+                        ${
+                            isImage
+                            ? `<img src="${file.url}" alt="${file.name}" loading="lazy">`
+                            : `
+                                <div class="file-placeholder">
+                                    <i class="fas ${getFileIcon(file.name)}"></i>
+                                    <p class="file-name">${file.name}</p>
+                                </div>
+                            `
+                        }
+                        <div class="file-overlay">
+                            <button class="delete-btn" aria-label="Delete file"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                    <div class="uploader-info">
+                        <div class="user-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="user-details">
+                            <p class="username">${file.username}</p>
+                            <p class="upload-time">${file.uploadTime}</p>
+                        </div>
+                    </div>
+                `;
+                fileList.appendChild(card);
+
+                // Add delete event listener
+                card.querySelector('.delete-btn').addEventListener('click', () => deleteFile(file.id, file.name));
+            });
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            uploadSection.style.display = 'block';
+            loadUserFiles();
+        });
+    </script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #6366f1;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --bg-light: #f8fafc;
+            --bg-dark: #0f172a;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            overflow-x: hidden;
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .home-icon {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: var(--card-bg);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(12px);
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            z-index: 1000;
+            color: var(--primary);
+            font-size: 1.5rem;
+            text-decoration: none;
+        }
+
+        .home-icon:hover {
+            transform: translateY(-3px) scale(1.05);
+            background: white;
+            color: var(--primary-light);
+        }
+
+        .section {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 32px;
+            margin: 40px 0;
+            backdrop-filter: blur(12px);
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            animation: rotate 20s linear infinite;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h2 {
+            color: var(--text-dark);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            position: relative;
+            display: inline-block;
+        }
+
+        h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 60px;
+            height: 4px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .upload-section {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .upload-form {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .upload-form input[type="file"] {
+            padding: 10px;
+            border: 2px dashed var(--primary);
+            border-radius: 8px;
+            background: #f1f5f9;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+
+        .upload-form input[type="file"]::file-selector-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .upload-form input[type="file"]::file-selector-button:hover {
+            background: var(--primary-light);
+        }
+
+        .upload-btn {
+            padding: 12px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .upload-btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .upload-btn:disabled {
+            background: var(--text-light);
+            cursor: not-allowed;
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .file-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .file-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .card-file-container {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            overflow: hidden;
+        }
+
+        .card-file-container img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .file-card:hover .card-file-container img {
+            transform: scale(1.05);
+        }
+
+        .file-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f1f5f9;
+            text-align: center;
+            padding: 16px;
+        }
+
+        .file-placeholder i {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .file-name {
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            word-break: break-all;
+            padding: 0 8px;
+        }
+
+        .file-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity var(--transition);
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            padding: 10px;
+        }
+
+        .file-card:hover .file-overlay {
+            opacity: 1;
+        }
+
+        .delete-btn {
+            background: rgba(220, 38, 38, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .delete-btn:hover {
+            background: rgba(239, 68, 68, 0.9);
+            transform: scale(1.1);
+        }
+
+        .uploader-info {
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+        }
+
+        .user-avatar i {
+            font-size: 28px;
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .username {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+
+        .upload-time {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .success-message {
+            color: #dc2626;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .error-message {
+            color: #dc2626;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .loader {
+            color: var(--primary);
+            font-size: 0.9rem;
+            text-align: center;
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .loader::after {
+            content: '';
+            display: absolute;
+            width: 20px;
+            height: 20px;
+            border: 50%;
+            border-radius: 50%;
+            border: var(--primary);
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        @keyframes spin {
+            0% { transform: translateY(-50%) rotate(0deg); }
+            100% { transform: translateY(-50%) rotate(360deg); }
+        }
+
+        .no-files {
+            color: var(--text-light);
+            font-size: 1rem;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="home-icon"><i class="fas fa-home"></i></a>
+        <div class="section upload-section" id="uploadSection">
+            <h2>Manage Files</h2>
+            <div class="upload-form">
+                <input type="file" id="fileInput" multiple accept="*/*">
+                <button class="upload-btn" id="uploadBtn"><i class="fas fa-upload"></i> Upload Files</button>
+                <p id="uploadStatus"></p>
+            </div>
+            <div class="file-grid" id="fileList"></div>
+        </div>
+    </div>
+</body>
+</html>
