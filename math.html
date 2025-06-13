@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>math Image Gallery</title>
+    <title>Math File Gallery</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -33,7 +33,7 @@
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZndxY3ZkbXZlcGZucmZhdW9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NDEzNDEsImV4cCI6MjA2MzAxNzM0MX0.JVZdY8iz_fk2KkiufoYbL49VHtblRq5OhA6pPMonWyY'
         );
 
-        // Cache settings (7 days expiration)
+        // Cache settings
         const CACHE_EXPIRATION = 7 * 24 * 60 * 60 * 1000;
         const CACHE_KEY = 'mathGalleryCache';
 
@@ -41,7 +41,28 @@
         const imageGrid = document.getElementById('imageGrid');
         const cacheIndicator = document.getElementById('cacheIndicator');
 
-        // Function to save data to cache
+        // File type detection
+        const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        function isImage(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            return IMAGE_EXTENSIONS.includes(ext);
+        }
+
+        // File icon mapping
+        const FILE_ICONS = {
+            pdf: 'fa-file-pdf',
+            doc: 'fa-file-word',
+            docx: 'fa-file-word',
+            txt: 'fa-file-alt',
+            default: 'fa-file'
+        };
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            return FILE_ICONS[ext] || FILE_ICONS.default;
+        }
+
+        // Cache functions
         function saveToCache(data) {
             const cacheData = {
                 timestamp: Date.now(),
@@ -50,33 +71,26 @@
             localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
         }
 
-        // Function to get data from cache
         function getFromCache() {
             const cache = localStorage.getItem(CACHE_KEY);
             if (!cache) return null;
-            
             const parsedCache = JSON.parse(cache);
             const isExpired = Date.now() - parsedCache.timestamp > CACHE_EXPIRATION;
-            
             if (isExpired) {
                 localStorage.removeItem(CACHE_KEY);
                 return null;
             }
-            
             return parsedCache.data;
         }
 
-        // Function to fetch fresh data from Firebase and Supabase
         async function fetchFreshData() {
             try {
-                // Get list of files from Supabase
                 const { data: files, error: listError } = await supabaseClient.storage
                     .from('math')
                     .list();
 
                 if (listError) throw listError;
 
-                // Get all image metadata from Firestore
                 const usersSnapshot = await getDocs(collection(db, 'users'));
                 const imageMetadata = [];
                 
@@ -87,111 +101,126 @@
                     });
                 }
 
-                // Process images for display and caching
-                const imagesData = [];
+                const filesData = [];
                 for (const file of files) {
                     if (file.name === '.') continue;
                     const { publicUrl } = supabaseClient.storage.from('math').getPublicUrl(file.name).data;
                     const metadata = imageMetadata.find(meta => meta.filename === file.name) || {};
                     
-                    imagesData.push({
+                    filesData.push({
                         url: publicUrl,
                         name: file.name,
-                        username: metadata.username || 'Unknown',
-                        uploadTime: metadata.uploadTime || 'just now'
+                        uploadTime: metadata.uploadTime || 'just now',
+                        isImage: isImage(file.name)
                     });
                 }
 
-                return imagesData;
-
+                return filesData;
             } catch (error) {
                 console.error('Error fetching data:', error);
                 throw error;
             }
         }
 
-        // Function to render images
-        function renderImages(images, fromCache = false) {
+        function renderImages(files, fromCache = false) {
             if (fromCache) {
                 cacheIndicator.style.display = 'block';
-                setTimeout(() => {
-                    cacheIndicator.style.display = 'none';
-                }, 3000);
+                setTimeout(() => cacheIndicator.style.display = 'none', 3000);
             }
 
             imageGrid.innerHTML = '';
             
-            if (images.length === 0) {
-                imageGrid.innerHTML = '<p class="no-images">No images found</p>';
+            if (files.length === 0) {
+                imageGrid.innerHTML = '<p class="no-images">No files found</p>';
                 return;
             }
             
-            images.forEach(image => {
+            files.forEach(file => {
                 const card = document.createElement('div');
-                card.className = 'image-card';
-                card.innerHTML = `
-                    <div class="card-image-container">
-                        <img src="${image.url}" alt="${image.name}" loading="lazy">
-                        <div class="image-overlay">
-                            <button class="like-btn"><i class="far fa-heart"></i></button>
-                            <button class="download-btn"><i class="fas fa-download"></i></button>
+                card.className = 'file-card';
+                
+                const content = file.isImage 
+                    ? `<img src="${file.url}" alt="${file.name}" loading="lazy">`
+                    : `
+                        <div class="file-icon">
+                            <i class="fas ${getFileIcon(file.name)}"></i>
+                            <p class="file-name">${file.name}</p>
                         </div>
+                    `;
+
+                card.innerHTML = `
+                    <div class="card-file-container">
+                        ${content}
+                        <button class="download-btn" data-url="${file.url}" data-name="${file.name}">
+                            <i class="fas fa-download"></i>
+                        </button>
                     </div>
                     <div class="uploader-info">
                         <div class="user-avatar">
                             <i class="fas fa-user-circle"></i>
                         </div>
                         <div class="user-details">
-                            <p class="username">${image.username}</p>
-                            <p class="upload-time">${image.uploadTime}</p>
+                            <p class="upload-time">${file.uploadTime}</p>
                         </div>
                     </div>
                 `;
                 imageGrid.appendChild(card);
             });
+
+            // Add download button event listeners
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const url = btn.dataset.url;
+                    const name = btn.dataset.name;
+                    try {
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const blob = await response.blob();
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = name;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(downloadUrl);
+                    } catch (error) {
+                        console.error('Download failed:', error);
+                        alert('Failed to download file. Please try again.');
+                    }
+                });
+            });
         }
 
-        // Main function to load images
         async function loadImages() {
-            // Show loading state only if we don't have cache
             const cachedData = getFromCache();
             if (!cachedData) {
                 imageGrid.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
             }
 
             try {
-                // Try to load from cache first
                 if (cachedData) {
                     renderImages(cachedData, true);
-                    
-                    // Fetch fresh data in background without showing loading state
                     fetchFreshData()
                         .then(freshData => {
                             saveToCache(freshData);
-                            // Only update if there are changes
                             if (JSON.stringify(cachedData) !== JSON.stringify(freshData)) {
                                 renderImages(freshData);
                             }
                         })
-                        .catch(error => {
-                            console.log('Background refresh failed:', error);
-                        });
-                    
+                        .catch(error => console.log('Background refresh failed:', error));
                     return;
                 }
                 
-                // If no cache, fetch fresh data
                 const freshData = await fetchFreshData();
                 saveToCache(freshData);
                 renderImages(freshData);
-                
             } catch (error) {
-                imageGrid.innerHTML = '<p class="error-message">Failed to load images. Please try again later.</p>';
-                console.error('Error loading images:', error);
+                imageGrid.innerHTML = '<p class="error-message">Failed to load files. Please try again later.</p>';
+                console.error('Error loading files:', error);
             }
         }
 
-        // Clear cache function (for debugging)
         function clearCache() {
             localStorage.removeItem(CACHE_KEY);
             const indicator = document.createElement('div');
@@ -199,26 +228,18 @@
             indicator.className = 'cache-notification';
             document.body.appendChild(indicator);
             
-            setTimeout(() => {
-                indicator.remove();
-            }, 2000);
-            
-            // Reload images
+            setTimeout(() => indicator.remove(), 2000);
             loadImages();
         }
 
-        // Initialize the page
         document.addEventListener('DOMContentLoaded', () => {
             loadImages();
-            
-            // Add clear cache button (for debugging)
             const clearCacheBtn = document.createElement('button');
             clearCacheBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Cache';
             clearCacheBtn.className = 'clear-cache-btn';
             clearCacheBtn.addEventListener('click', clearCache);
             document.body.appendChild(clearCacheBtn);
         });
-
     </script>
     <style>
         :root {
@@ -335,7 +356,7 @@
             gap: 24px;
         }
 
-        .image-card {
+        .file-card {
             background: white;
             border-radius: 16px;
             overflow: hidden;
@@ -345,19 +366,20 @@
             flex-direction: column;
         }
 
-        .image-card:hover {
+        .file-card:hover {
             transform: translateY(-8px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
 
-        .card-image-container {
+        .card-file-container {
             position: relative;
             width: 100%;
             padding-top: 100%;
             overflow: hidden;
+            background: #f8fafc;
         }
 
-        .card-image-container img {
+        .card-file-container img {
             position: absolute;
             top: 0;
             left: 0;
@@ -367,31 +389,38 @@
             transition: transform 0.5s ease;
         }
 
-        .image-card:hover .card-image-container img {
+        .file-card:hover .card-file-container img {
             transform: scale(1.05);
         }
 
-        .image-overlay {
+        .file-icon {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 40%);
-            opacity: 0;
-            transition: var(--transition);
             display: flex;
-            justify-content: flex-end;
-            align-items: flex-end;
-            padding: 16px;
-            gap: 10px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: var(--primary);
+            text-align: center;
+            padding: 20px;
         }
 
-        .image-card:hover .image-overlay {
-            opacity: 1;
+        .file-name {
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            margin-top: 10px;
+            word-break: break-all;
+            padding: 0 10px;
         }
 
-        .like-btn, .download-btn {
+        .download-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
             background: rgba(255, 255, 255, 0.9);
             border: none;
             width: 36px;
@@ -403,9 +432,10 @@
             cursor: pointer;
             color: var(--text-dark);
             transition: var(--transition);
+            box-shadow: var(--shadow);
         }
 
-        .like-btn:hover, .download-btn:hover {
+        .download-btn:hover {
             background: var(--primary);
             color: white;
             transform: scale(1.1);
@@ -434,12 +464,6 @@
 
         .user-details {
             flex: 1;
-        }
-
-        .username {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--text-dark);
         }
 
         .upload-time {
@@ -593,7 +617,7 @@
     </a>
     <div class="container">
         <div class="section">
-            <h2>math Image Gallery</h2>
+            <h2>Math File Gallery</h2>
             <div class="image-grid" id="imageGrid"></div>
         </div>
     </div>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Manage Files</title>
+    <title>File Upload and Management</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -27,210 +27,290 @@
         const db = getFirestore(app);
 
         // Supabase client initialization
-        const supabaseClient = window.supabase.createClient(
+        const { createClient } = supabase;
+        const supabaseClient = createClient(
             'https://jxfwqcvdmvepfnrfauoe.supabase.co',
             'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZndxY3ZkbXZlcGZucmZhdW9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NDEzNDEsImV4cCI6MjA2MzAxNzM0MX0.JVZdY8iz_fk2KkiufoYbL49VHtblRq5OhA6pPMonWyY'
         );
 
+        // Cache settings
+        const CACHE_EXPIRATION = 7 * 24 * 60 * 60 * 1000;
+        const CACHE_KEY = 'fileGalleryCache';
+
         // DOM elements
-        const uploadSection = document.getElementById('uploadSection');
+        const imageGrid = document.getElementById('imageGrid');
         const fileInput = document.getElementById('fileInput');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const uploadStatus = document.getElementById('uploadStatus');
-        const fileList = document.getElementById('fileList');
+        const cacheIndicator = document.getElementById('cacheIndicator');
+        const uploadMessage = document.getElementById('uploadMessage');
 
-        // Static user ID and username for anonymous access
-        const staticUserId = 'anonymous_user';
-        const staticUsername = 'Admin';
-
-        // Supported image extensions for display
-        const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-
-        // Function to check if a file is an image
-        function isImageFile(filename) {
-            return IMAGE_EXTENSIONS.some(ext => filename.toLowerCase().endsWith(ext));
+        // File type detection
+        const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        function isImage(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            return IMAGE_EXTENSIONS.includes(ext);
         }
 
-        // Function to get appropriate file icon
+        // File icon mapping
+        const FILE_ICONS = {
+            pdf: 'fa-file-pdf',
+            doc: 'fa-file-word',
+            docx: 'fa-file-word',
+            txt: 'fa-file-alt',
+            default: 'fa-file'
+        };
+
         function getFileIcon(filename) {
-            if (filename.toLowerCase().endsWith('.zip')) return 'fa-file-zip';
-            if (filename.toLowerCase().endsWith('.ppt') || filename.toLowerCase().endsWith('.pptx')) return 'fa-file-powerpoint';
-            if (filename.toLowerCase().endsWith('.docx')) return 'fa-file-word';
-            return 'fa-file-alt';
+            const ext = filename.split('.').pop().toLowerCase();
+            return FILE_ICONS[ext] || FILE_ICONS.default;
         }
 
-        // File upload handling
-        uploadBtn.addEventListener('click', async () => {
-            const files = fileInput.files;
-            if (!files.length) {
-                uploadStatus.textContent = 'Please select at least one file.';
-                uploadStatus.className = 'error-message';
-                return;
-            }
-
-            uploadStatus.textContent = 'Uploading...';
-            uploadStatus.className = 'loader';
-            uploadBtn.disabled = true;
-
-            try {
-                for (const file of files) {
-                    // Validate file size (max 10MB)
-                    if (file.size > 10 * 1024 * 1024) {
-                        uploadStatus.textContent = `File ${file.name} is too large (max 10MB).`;
-                        uploadStatus.className = 'error-message';
-                        continue;
-                    }
-
-                    // Generate unique filename
-                    const filePath = `${Date.now()}_${file.name}`;
-
-                    // Upload to Supabase
-                    const { data, error } = await supabaseClient.storage
-                        .from('account')
-                        .upload(filePath, file, {
-                            cacheControl: '3600',
-                            upsert: false
-                        });
-
-                    if (error) {
-                        uploadStatus.textContent = `Failed to upload ${file.name}: ${error.message}`;
-                        uploadStatus.className = 'error-message';
-                        console.error('Upload error:', error);
-                        continue;
-                    }
-
-                    // Store metadata in Firestore
-                    await addDoc(collection(db, 'users', staticUserId, 'files'), {
-                        filename: filePath,
-                        username: staticUsername,
-                        uploadTime: new Date().toISOString()
-                    });
-
-                    uploadStatus.textContent = `Successfully uploaded ${file.name}`;
-                    uploadStatus.className = 'success-message';
-                }
-
-                // Clear input and reload files
-                fileInput.value = '';
-                loadUserFiles();
-                setTimeout(() => {
-                    uploadStatus.textContent = '';
-                }, 3000);
-
-            } catch (error) {
-                uploadStatus.textContent = 'Upload failed. Please try again.';
-                uploadStatus.className = 'error-message';
-                console.error('Upload error:', error);
-            } finally {
-                uploadBtn.disabled = false;
-            }
-        });
-
-        // Function to load files
-        async function loadUserFiles() {
-            try {
-                const filesSnapshot = await getDocs(collection(db, 'users', staticUserId, 'files'));
-                const filesData = [];
-
-                for (const doc of filesSnapshot.docs) {
-                    const data = doc.data();
-                    const { publicUrl } = supabaseClient.storage.from('account').getPublicUrl(data.filename).data;
-                    filesData.push({
-                        id: doc.id,
-                        url: publicUrl,
-                        name: data.filename,
-                        username: data.username,
-                        uploadTime: data.uploadTime,
-                        isImage: isImageFile(data.filename)
-                    });
-                }
-
-                renderFiles(filesData);
-            } catch (error) {
-                fileList.innerHTML = '<p class="error-message">Failed to load files. Please try again.</p>';
-                console.error('Error loading files:', error);
-            }
+        // Cache functions
+        function saveToCache(data) {
+            const cacheData = {
+                timestamp: Date.now(),
+                data: data
+            };
+            localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
         }
 
-        // Function to delete a file
-        async function deleteFile(fileId, fileName) {
+        function getFromCache() {
+            const cache = localStorage.getItem(CACHE_KEY);
+            if (!cache) return null;
+            const parsedCache = JSON.parse(cache);
+            const isExpired = Date.now() - parsedCache.timestamp > CACHE_EXPIRATION;
+            if (isExpired) {
+                localStorage.removeItem(CACHE_KEY);
+                return null;
+            }
+            return parsedCache.data;
+        }
+
+        async function fetchFreshData() {
             try {
-                // Delete from Supabase
-                const { error: storageError } = await supabaseClient.storage
+                const { data: files, error: listError } = await supabaseClient.storage
                     .from('account')
-                    .remove([fileName]);
+                    .list();
 
-                if (storageError) throw storageError;
+                if (listError) throw listError;
 
-                // Delete from Firestore
-                await deleteDoc(doc(db, 'users', staticUserId, 'files', fileId));
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                const imageMetadata = [];
+                
+                for (const userDoc of usersSnapshot.docs) {
+                    const imagesSnapshot = await getDocs(collection(db, 'users', userDoc.id, 'images'));
+                    imagesSnapshot.forEach((doc) => {
+                        imageMetadata.push({ id: doc.id, ...doc.data() });
+                    });
+                }
 
-                uploadStatus.textContent = `Successfully deleted ${fileName}`;
-                uploadStatus.className = 'success-message';
-                setTimeout(() => {
-                    uploadStatus.textContent = '';
-                }, 3000);
+                const filesData = [];
+                for (const file of files) {
+                    if (file.name === '.') continue;
+                    const { publicUrl } = supabaseClient.storage.from('account').getPublicUrl(file.name).data;
+                    const metadata = imageMetadata.find(meta => meta.filename === file.name) || {};
+                    
+                    filesData.push({
+                        url: publicUrl,
+                        name: file.name,
+                        uploadTime: metadata.uploadTime || 'just now',
+                        isImage: isImage(file.name),
+                        docId: metadata.id
+                    });
+                }
 
-                // Reload files
-                loadUserFiles();
+                return filesData;
             } catch (error) {
-                uploadStatus.textContent = `Failed to delete ${fileName}. Please try again.`;
-                uploadStatus.className = 'error-message';
-                console.error('Delete error:', error);
+                console.error('Error fetching data:', error);
+                throw error;
             }
         }
 
-        // Function to render files
-        function renderFiles(files) {
-            fileList.innerHTML = '';
-
-            if (files.length === 0) {
-                fileList.innerHTML = '<p class="no-files">No files uploaded yet.</p>';
-                return;
+        function renderImages(files, fromCache = false) {
+            if (fromCache) {
+                cacheIndicator.style.display = 'block';
+                setTimeout(() => cacheIndicator.style.display = 'none', 3000);
             }
 
+            imageGrid.innerHTML = '';
+            
+            if (files.length === 0) {
+                imageGrid.innerHTML = '<p class="no-images">No files found</p>';
+                return;
+            }
+            
             files.forEach(file => {
                 const card = document.createElement('div');
                 card.className = 'file-card';
-                const isImage = file.isImage;
+                
+                const content = file.isImage 
+                    ? `<img src="${file.url}" alt="${file.name}" loading="lazy">`
+                    : `
+                        <div class="file-icon">
+                            <i class="fas ${getFileIcon(file.name)}"></i>
+                            <p class="file-name">${file.name}</p>
+                        </div>
+                    `;
 
                 card.innerHTML = `
                     <div class="card-file-container">
-                        ${
-                            isImage
-                            ? `<img src="${file.url}" alt="${file.name}" loading="lazy">`
-                            : `
-                                <div class="file-placeholder">
-                                    <i class="fas ${getFileIcon(file.name)}"></i>
-                                    <p class="file-name">${file.name}</p>
-                                </div>
-                            `
-                        }
-                        <div class="file-overlay">
-                            <button class="delete-btn" aria-label="Delete file"><i class="fas fa-trash-alt"></i></button>
-                        </div>
+                        ${content}
+                        <button class="download-btn" data-url="${file.url}" data-name="${file.name}">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="delete-btn" data-name="${file.name}" data-doc-id="${file.docId || ''}">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                     <div class="uploader-info">
                         <div class="user-avatar">
                             <i class="fas fa-user-circle"></i>
                         </div>
                         <div class="user-details">
-                            <p class="username">${file.username}</p>
                             <p class="upload-time">${file.uploadTime}</p>
                         </div>
                     </div>
                 `;
-                fileList.appendChild(card);
+                imageGrid.appendChild(card);
+            });
 
-                // Add delete event listener
-                card.querySelector('.delete-btn').addEventListener('click', () => deleteFile(file.id, file.name));
+            // Add download button event listeners
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const url = btn.dataset.url;
+                    const name = btn.dataset.name;
+                    try {
+                        const response = await fetch(url);
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const blob = await response.blob();
+                        const downloadUrl = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = downloadUrl;
+                        link.download = name;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(downloadUrl);
+                    } catch (error) {
+                        console.error('Download failed:', error);
+                        showMessage('Failed to download file.', 'error');
+                    }
+                });
+            });
+
+            // Add delete button event listeners
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const fileName = btn.dataset.name;
+                    const docId = btn.dataset.docId;
+                    if (confirm(`Are you sure you want to delete ${fileName}?`)) {
+                        try {
+                            // Delete from Supabase storage
+                            const { error: storageError } = await supabaseClient.storage
+                                .from('account')
+                                .remove([fileName]);
+                            if (storageError) throw storageError;
+
+                            // Delete metadata from Firestore if docId exists
+                            if (docId) {
+                                await deleteDoc(doc(db, 'users', 'USER_ID', 'images', docId));
+                            }
+
+                            showMessage('File deleted successfully!', 'success');
+                            loadImages();
+                        } catch (error) {
+                            console.error('Delete failed:', error);
+                            showMessage('Failed to delete file.', 'error');
+                        }
+                    }
+                });
             });
         }
 
-        // Initialize page
+        async function uploadFile(file) {
+            try {
+                const fileName = `${Date.now()}_${file.name}`;
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('account')
+                    .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+
+                // Save metadata to Firestore
+                await addDoc(collection(db, 'users', 'USER_ID', 'images'), {
+                    filename: fileName,
+                    uploadTime: new Date().toISOString()
+                });
+
+                showMessage('File uploaded successfully!', 'success');
+                loadImages();
+            } catch (error) {
+                console.error('Upload failed:', error);
+                showMessage('Failed to upload file.', 'error');
+            }
+        }
+
+        function showMessage(message, type) {
+            uploadMessage.textContent = message;
+            uploadMessage.className = `upload-message ${type}`;
+            uploadMessage.style.display = 'block';
+            setTimeout(() => {
+                uploadMessage.style.display = 'none';
+            }, 3000);
+        }
+
+        async function loadImages() {
+            const cachedData = getFromCache();
+            if (!cachedData) {
+                imageGrid.innerHTML = '<div class="loader"><div class="spinner"></div></div>';
+            }
+
+            try {
+                if (cachedData) {
+                    renderImages(cachedData, true);
+                    fetchFreshData()
+                        .then(freshData => {
+                            saveToCache(freshData);
+                            if (JSON.stringify(cachedData) !== JSON.stringify(freshData)) {
+                                renderImages(freshData);
+                            }
+                        })
+                        .catch(error => console.log('Background refresh failed:', error));
+                    return;
+                }
+                
+                const freshData = await fetchFreshData();
+                saveToCache(freshData);
+                renderImages(freshData);
+            } catch (error) {
+                imageGrid.innerHTML = '<p class="error-message">Failed to load files. Please try again later.</p>';
+                console.error('Error loading files:', error);
+            }
+        }
+
+        function clearCache() {
+            localStorage.removeItem(CACHE_KEY);
+            showMessage('Cache cleared!', 'success');
+            loadImages();
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            uploadSection.style.display = 'block';
-            loadUserFiles();
+            loadImages();
+
+            fileInput.addEventListener('change', async (event) => {
+                const files = event.target.files;
+                if (files.length > 0) {
+                    for (const file of files) {
+                        await uploadFile(file);
+                    }
+                    fileInput.value = ''; // Reset input
+                }
+            });
+
+            const clearCacheBtn = document.createElement('button');
+            clearCacheBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Clear Cache';
+            clearCacheBtn.className = 'clear-cache-btn';
+            clearCacheBtn.addEventListener('click', clearCache);
+            document.body.appendChild(clearCacheBtn);
         });
     </script>
     <style>
@@ -250,7 +330,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Poppins', sans-serif;
         }
 
         body {
@@ -278,11 +358,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(12px);
             box-shadow: var(--shadow);
             transition: var(--transition);
             z-index: 1000;
-            color: var(--primary);
+            color: var DirectAssistant: --primary;
             font-size: 1.5rem;
             text-decoration: none;
         }
@@ -298,28 +377,9 @@
             border-radius: 24px;
             padding: 32px;
             margin: 40px 0;
-            backdrop-filter: blur(12px);
             box-shadow: var(--shadow);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            overflow: hidden;
             position: relative;
-        }
-
-        .section::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(79, 70, 229, 0.1) 0%, transparent 70%);
-            z-index: -1;
-            animation: rotate 20s linear infinite;
-        }
-
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
 
         h2 {
@@ -328,7 +388,6 @@
             font-weight: 700;
             margin-bottom: 24px;
             position: relative;
-            display: inline-block;
         }
 
         h2::after {
@@ -343,56 +402,25 @@
         }
 
         .upload-section {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .upload-form {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            box-shadow: var(--shadow);
+            margin-bottom: 20px;
             display: flex;
-            flex-direction: column;
-            gap: 16px;
-            margin-bottom: 32px;
+            align-items: center;
+            gap: 10px;
         }
 
-        .upload-form input[type="file"] {
-            padding: 10px;
-            border: 2px dashed var(--primary);
-            border-radius: 8px;
-            background: #f1f5f9;
-            color: var(--text-dark);
-            font-size: 0.9rem;
-        }
-
-        .upload-form input[type="file"]::file-selector-button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .upload-form input[type="file"]::file-selector-button:hover {
-            background: var(--primary-light);
+        .upload-section input[type="file"] {
+            display: none;
         }
 
         .upload-btn {
-            padding: 12px 24px;
+            padding: 10px 20px;
             background: var(--primary);
             color: white;
             border: none;
-            border-radius: 20px;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 1rem;
             transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .upload-btn:hover {
@@ -400,12 +428,7 @@
             transform: translateY(-2px);
         }
 
-        .upload-btn:disabled {
-            background: var(--text-light);
-            cursor: not-allowed;
-        }
-
-        .file-grid {
+        .image-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 24px;
@@ -423,7 +446,7 @@
 
         .file-card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
         .card-file-container {
@@ -431,6 +454,7 @@
             width: 100%;
             padding-top: 100%;
             overflow: hidden;
+            background: #f8fafc;
         }
 
         .card-file-container img {
@@ -447,7 +471,7 @@
             transform: scale(1.05);
         }
 
-        .file-placeholder {
+        .file-icon {
             position: absolute;
             top: 0;
             left: 0;
@@ -457,153 +481,254 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: #f1f5f9;
-            text-align: center;
-            padding: 16px;
-        }
-
-        .file-placeholder i {
-            font-size: 2.5rem;
+            font-size: 4rem;
             color: var(--primary);
-            margin-bottom: 8px;
+            text-align: center;
+            padding: 20px;
         }
 
         .file-name {
             font-size: 0.9rem;
             color: var(--text-dark);
+            margin-top: 10px;
             word-break: break-all;
-            padding: 0 8px;
+            padding: 0 10px;
         }
 
-        .file-overlay {
+        .download-btn, .delete-btn {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 50%);
-            opacity: 0;
-            transition: opacity var(--transition);
-            display: flex;
-            align-items: flex-end;
-            justify-content: flex-end;
-            padding: 10px;
-        }
-
-        .file-card:hover .file-overlay {
-            opacity: 1;
-        }
-
-        .delete-btn {
-            background: rgba(220, 38, 38, 0.9);
-            color: white;
-            border: none;
+            bottom: 10px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            color: var(--text-dark);
             transition: var(--transition);
+            box-shadow: var(--shadow);
+            border: none;
+        }
+
+        .download-btn {
+            right: 60px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .delete-btn {
+            right: 10px;
+            background: rgba(255, 0, 0, 0.1);
+        }
+
+        .download-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
         }
 
         .delete-btn:hover {
-            background: rgba(239, 68, 68, 0.9);
+            background: #ef4444;
+            color: white;
             transform: scale(1.1);
         }
 
         .uploader-info {
-            padding: 10px;
             display: flex;
             align-items: center;
-            background: #f8fafc;
+            padding: 16px;
+            background: white;
+            margin-top: auto;
         }
 
-        .user-avatar i {
-            font-size: 28px;
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e7ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
             color: var(--primary);
-            margin-right: 10px;
+            font-size: 1.2rem;
         }
 
         .user-details {
             flex: 1;
         }
 
-        .username {
-            font-weight: 600;
-            color: var(--text-dark);
-            font-size: 0.9rem;
-        }
-
         .upload-time {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-light);
-        }
-
-        .success-message {
-            color: #dc2626;
-            font-size: 0.9rem;
-            margin-top: 10px;
-            text-align: center;
-        }
-
-        .error-message {
-            color: #dc2626;
-            font-size: 0.9rem;
-            margin-top: 10px;
-            text-align: center;
         }
 
         .loader {
-            color: var(--primary);
-            font-size: 0.9rem;
-            text-align: center;
-            position: relative;
-            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            grid-column: 1 / -1;
         }
 
-        .loader::after {
-            content: '';
-            display: absolute;
-            width: 20px;
-            height: 20px;
-            border: 50%;
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(79, 70, 229, 0.2);
             border-radius: 50%;
-            border: var(--primary);
-            border-top-color: transparent;
-            animation: spin 1s linear infinite;
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
         }
 
         @keyframes spin {
-            0% { transform: translateY(-50%) rotate(0deg); }
-            100% { transform: translateY(-50%) rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
 
-        .no-files {
-            color: var(--text-light);
-            font-size: 1rem;
+        .error-message {
+            color: #ef4444;
             text-align: center;
             padding: 20px;
+            font-weight: 500;
+            grid-column: 1 / -1;
+        }
+
+        .no-images {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-light);
+            grid-column: 1 / -1;
+        }
+
+        .cache-indicator {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            display: none;
+        }
+
+        .clear-cache-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .clear-cache-btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .upload-message {
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .upload-message.success {
+            background: var(--primary);
+            color: white;
+        }
+
+        .upload-message.error {
+            background: #ef4444;
+            color: white;
+        }
+
+        @media (max-width: 1024px) {
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .section {
+                padding: 24px;
+                border-radius: 20px;
+            }
+
+            h2 {
+                font-size: 1.75rem;
+            }
+
+            .image-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .section {
+                padding: 20px;
+                border-radius: 16px;
+                margin: 20px 0;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .image-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .home-icon {
+                width: 44px;
+                height: 44px;
+                font-size: 1.2rem;
+            }
+
+            .clear-cache-btn {
+                font-size: 0;
+                width: 44px;
+                height: 44px;
+                justify-content: center;
+            }
+
+            .clear-cache-btn i {
+                font-size: 1rem;
+                margin: 0;
+            }
         }
     </style>
 </head>
 <body>
+    <a href="dash.html" class="home-icon">
+        <i class="fas fa-home"></i>
+    </a>
     <div class="container">
-        <a href="/" class="home-icon"><i class="fas fa-home"></i></a>
-        <div class="section upload-section" id="uploadSection">
-            <h2>Manage Files</h2>
-            <div class="upload-form">
+        <div class="section">
+            <h2>File Management</h2>
+            <div class="upload-section">
+                <label for="fileInput" class="upload-btn">
+                    <i class="fas fa-upload"></i> Upload File
+                </label>
                 <input type="file" id="fileInput" multiple accept="*/*">
-                <button class="upload-btn" id="uploadBtn"><i class="fas fa-upload"></i> Upload Files</button>
-                <p id="uploadStatus"></p>
             </div>
-            <div class="file-grid" id="fileList"></div>
+            <div class="image-grid" id="imageGrid"></div>
         </div>
     </div>
+    <div class="cache-indicator" id="cacheIndicator">Loaded from cache</div>
+    <div class="upload-message" id="uploadMessage"></div>
 </body>
 </html>
