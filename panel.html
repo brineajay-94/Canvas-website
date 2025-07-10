@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBER ACCESS // Secure Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Orbitron', 'Share Tech Mono', monospace;
+            background: linear-gradient(135deg, #0a0a1a 0%, #121230 100%);
+            color: #0aff0a;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        #matrixCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+        }
+        .header {
+            text-align: center;
+            padding: 15px 0;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 0 0 10px #00f7ff, 0 0 20px #00f7ff;
+            animation: flicker 3s infinite alternate;
+        }
+        .header .subtitle {
+            font-size: 1rem;
+            color: #0aff0a;
+            margin-top: 5px;
+            letter-spacing: 2px;
+        }
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+        .terminal {
+            width: 100%;
+            max-width: 900px;
+            background-color: rgba(0, 0, 0, 0.85);
+            border: 2px solid #00f7ff;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 
+                0 0 20px rgba(0, 247, 255, 0.5), 
+                inset 0 0 15px rgba(0, 247, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+        .terminal::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(to bottom, 
+                rgba(0, 247, 255, 0.1) 0%, 
+                transparent 100%);
+            animation: scanline 8s linear infinite;
+            z-index: 3;
+        }
+        .terminal::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(0deg, transparent 95%, rgba(255,0,255,0.1) 95%),
+                linear-gradient(90deg, transparent 95%, rgba(0,255,255,0.1) 95%);
+            background-size: 10px 10px;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.3;
+        }
+        .command-input {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            background-color: rgba(10, 10, 30, 0.7);
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid #ff00ff;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        .command-input:hover {
+            border-color: #00f7ff;
+            box-shadow: 0 0 15px rgba(0, 247, 255, 0.5);
+        }
+        .command-input span {
+            color: #ff00ff;
+            font-size: 18px;
+            margin-right: 10px;
+            text-shadow: 0 0 5px rgba(255, 0, 255, 0.7);
+        }
+        .command-input input {
+            background-color: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 16px;
+            flex-grow: 1;
+            outline: none;
+            letter-spacing: 1px;
+        }
+        .command-input input::placeholder {
+            color: #00cc00;
+            opacity: 0.7;
+        }
+        .blinker::after {
+            content: '█';
+            color: #00f7ff;
+            animation: blink 0.8s step-end infinite;
+            margin-left: 2px;
+            text-shadow: 0 0 8px #00f7ff;
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .output {
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            color: #00f7ff;
+            background-color: rgba(5, 5, 15, 0.8);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #1e90ff;
+            box-shadow: inset 0 0 10px rgba(30, 144, 255, 0.3);
+            font-family: 'Share Tech Mono', monospace;
+            position: relative;
+        }
+        .output .success { 
+            color: #00ff00; 
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.7);
+        }
+        .output .error { 
+            color: #ff3333; 
+            text-shadow: 0 0 5px rgba(255, 51, 51, 0.7);
+        }
+        .output .info { 
+            color: #ff00ff; 
+            text-shadow: 0 0 5px rgba(255, 0, 255, 0.7);
+        }
+        .output .system { 
+            color: #00f7ff; 
+            text-shadow: 0 0 5px rgba(0, 247, 255, 0.7);
+        }
+        .output .highlight { 
+            color: #ffff00; 
+            text-shadow: 0 0 5px rgba(255, 255, 0, 0.7);
+        }
+        .data-table {
+            display: none;
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00f7ff;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 247, 255, 0.3);
+        }
+        .data-table th, .data-table td {
+            border: 1px solid rgba(0, 247, 255, 0.3);
+            padding: 12px;
+            text-align: left;
+            font-size: 14px;
+        }
+        .data-table th {
+            background-color: rgba(0, 51, 102, 0.5);
+            color: #00f7ff;
+            text-shadow: 0 0 5px rgba(0, 247, 255, 0.7);
+            font-weight: bold;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: rgba(0, 51, 102, 0.2);
+        }
+        .data-table tr:hover {
+            background-color: rgba(0, 247, 255, 0.15);
+            box-shadow: inset 0 diffract 10px rgba(0, 247, 255, 0.3);
+        }
+        .footer {
+            text-align: center;
+            padding: 15px;
+            color: #00cc00;
+            font-size: 12px;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 2;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: #00f7ff;
+            font-size: 12px;
+            padding: 5px 10px;
+            background-color: rgba(10, 10, 30, 0.7);
+            border-radius: 4px;
+            border: 1px solid rgba(0, 247, 255, 0.3);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-secure {
+            background-color: #00ff00;
+            box-shadow: 0 0 5px #00ff00;
+        }
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                text-shadow: 
+                    0 0 10px #00f7ff, 
+                    0 0 20px #00f7ff,
+                    0 0 30px rgba(0, 247, 255, 0.5);
+                opacity: 1;
+            }
+            20%, 24%, 55% {
+                text-shadow: none;
+                opacity: 0.8;
+            }
+        }
+        @keyframes scanline {
+            0% {
+                transform: translateY(-20px);
+            }
+            100% {
+                transform: translateY(calc(100vh + 20px));
+            }
+        }
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            2% { transform: translate(2px, -2px); }
+            4% { transform: translate(-2px, 2px); }
+            6% { transform: translate(0); }
+            8% { transform: translate(2px, 0); }
+            10% { transform: translate(0); }
+            100% { transform: translate(0); }
+        }
+        .terminal {
+            animation: glitch 3s infinite;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .terminal {
+                padding: 15px;
+            }
+            .command-input input {
+                font-size: 14px;
+            }
+            .output, .data-table th, .data-table td {
+                font-size: 12px;
+            }
+            .data-table th, .data-table td {
+                padding: 8px;
+            }
+            .header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrixCanvas"></canvas>
+    
+    <div class="container">
+        <div class="header">
+            <h1>CYBER ACCESS TERMINAL</h1>
+            <div class="subtitle">SECURE SYSTEM // AUTHORIZED ACCESS ONLY</div>
+        </div>
+        
+        <div class="terminal">
+            <div class="status-bar">
+                <div>STATUS: <span class="status-indicator status-secure"></span> SECURE CONNECTION</div>
+                <div>USER: ADMIN</div>
+                <div>ENCRYPTION: AES-256</div>
+            </div>
+            
+            <div class="command-input">
+                <span>$</span>
+                <input type="text" id="commandInput" placeholder="Type command..." class="blinker">
+            </div>
+            
+            <div class="output" id="output">
+                <div class="system">Initializing secure terminal...</div>
+                <div class="system">Establishing encrypted connection...</div>
+                <div class="success">Connection secured [AES-256]</div>
+                <div class="system">User authentication required</div>
+                <div class="info">Type <span class="highlight">/st</span> to start the system</div>
+                <div class="info">Type <span class="highlight">/help</span> for available commands</div>
+            </div>
+            
+            <table class="data-table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Email/Phone</th>
+                        <th>Password</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="dataBody"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="footer">
+        @copyright@secure-panel // ENCRYPTED CHANNEL // v2.7.4
+    </div>
+
+    <script>
+        // Matrix background effect
+        const canvas = document.getElementById('matrixCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const chars = "アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$#@%&*";
+        const charArray = chars.split("");
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        
+        const drops = [];
+        for(let i = 0; i < columns; i++) {
+            drops[i] = Math.floor(Math.random() * canvas.height / fontSize);
+        }
+        
+        function drawMatrix() {
+            ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = "#0aff0a";
+            ctx.font = `${fontSize}px monospace`;
+            
+            for(let i = 0; i < drops.length; i++) {
+                const text = charArray[Math.floor(Math.random() * charArray.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                
+                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        
+        setInterval(drawMatrix, 50);
+        
+        // Terminal functionality
+        const output = document.getElementById('output');
+        const commandInput = document.getElementById('commandInput');
+        const dataTable = document.getElementById('dataTable');
+        const dataBody = document.getElementById('dataBody');
+        let state = 'initial';
+        let selectedPlatform = null;
+        const correctPin = '270399';
+        let pinAttempts = 0;
+        
+        // Append message to output with color
+        function appendOutput(message, type = 'system') {
+            const messageElement = document.createElement('div');
+            messageElement.className = type;
+            messageElement.textContent = message;
+            output.appendChild(messageElement);
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        // Clear input
+        function clearInput() {
+            commandInput.value = '';
+        }
+        
+        // Display help information
+        function showHelp() {
+            appendOutput('Available commands:', 'info');
+            appendOutput('------------------------', 'system');
+            
+            if (state === 'initial') {
+                appendOutput('/st - Initialize system', 'system');
+            } else if (state === 'platform_selection') {
+                appendOutput('1 - Facebook', 'system');
+                appendOutput('2 - Instagram', 'system');
+                appendOutput('3 - TikTok', 'system');
+                appendOutput('4 - Gmail', 'system');
+            } else if (state === 'platform_selected') {
+                appendOutput('/retrieve - Retrieve data', 'system');
+                appendOutput('/clear - Clear terminal', 'system');
+            } else if (state === 'waiting_for_pin') {
+                appendOutput('[pin] - Enter access PIN', 'system');
+            }
+            
+            appendOutput('/help - Show available commands', 'system');
+            appendOutput('------------------------', 'system');
+        }
+        
+        // Display platform selection menu
+        function showPlatformMenu() {
+            appendOutput('Select a platform:', 'info');
+            appendOutput('1. Facebook', 'system');
+            appendOutput('2. Instagram', 'system');
+            appendOutput('3. TikTok', 'system');
+            appendOutput('4. Gmail', 'system');
+            appendOutput('Enter the number (1-4) to select a platform.', 'info');
+            state = 'platform_selection';
+        }
+        
+        // Handle platform selection
+        function handlePlatformSelection(input) {
+            const platforms = {
+                '1': 'facebook',
+                '2': 'instagram',
+                '3': 'tiktok',
+                '4': 'gmail'
+            };
+            
+            if (platforms[input]) {
+                selectedPlatform = platforms[input];
+                appendOutput(`${selectedPlatform.charAt(0).toUpperCase() + selectedPlatform.slice(1)} selected.`, 'success');
+                appendOutput('Enter access PIN:', 'info');
+                state = 'waiting_for_pin';
+            } else {
+                appendOutput('Invalid selection. Please enter a number between 1 and 4.', 'error');
+            }
+        }
+        
+        // Display data for selected platform
+        function displayData(platform) {
+            dataBody.innerHTML = '';
+            dataTable.style.display = 'table';
+            
+            const platformData = {
+                facebook: [
+                    { email: "user1@fb.com", password: "******", timestamp: "2025-07-10 18:30:22" },
+                    { email: "user2@facebook.com", password: "******", timestamp: "2025-07-10 18:28:17" },
+                    { email: "+1234567890", password: "******", timestamp: "2025-07-10 18:25:41" },
+                    { email: "admin@fb.com", password: "******", timestamp: "2025-07-10 18:22:08" }
+                ],
+                instagram: [
+                    { email: "user1@ig.com", password: "******", timestamp: "2025-07-10 17:45:33" },
+                    { email: "influencer@instagram.com", password: "******", timestamp: "2025-07-10 17:42:19" },
+                    { email: "brand@company.com", password: "******", timestamp: "2025-07-10 17:40:05" },
+                    { email: "photographer@ig.com", password: "******", timestamp: "2025-07-10 17:38:51" }
+                ],
+                tiktok: [
+                    { email: "creator@tiktok.com", password: "******", timestamp: "2025-07-10 16:25:18" },
+                    { email: "user2@tt.com", password: "******", timestamp: "2025-07-10 16:22:49" },
+                    { email: "influencer@tt.com", password: "******", timestamp: "2025-07-10 16:20:27" },
+                    { email: "brand@tiktok.com", password: "******", timestamp: "2025-07-10 16:18:12" }
+                ],
+                gmail: [
+                    { email: "user1@gmail.com", password: "******", timestamp: "2025-07-10 15:15:44" },
+                    { email: "business@company.com", password: "******", timestamp: "2025-07-10 15:13:22" },
+                    { email: "developer@tech.io", password: "******", timestamp: "2025-07-10 15:10:07" },
+                    { email: "admin@org.com", password: "******", timestamp: "2025-07-10 15:08:33" }
+                ]
+            };
+            
+            platformData[platform].forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.email}</td>
+                    <td>${item.password}</td>
+                    <td>${item.timestamp}</td>
+                `;
+                dataBody.appendChild(row);
+            });
+            
+            appendOutput(`Data retrieved for ${platform.charAt(0).toUpperCase() + platform.slice(1)}.`, 'success');
+            state = 'platform_selected';
+        }
+        
+        // Handle command input
+        commandInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                const command = commandInput.value.trim().toLowerCase();
+                appendOutput(`$ ${command}`, 'system');
+                clearInput();
+                
+                if (state === 'initial') {
+                    if (command === '/st') {
+                        showPlatformMenu();
+                    } else if (command === '/help') {
+                        showHelp();
+                    } else {
+                        appendOutput('Invalid command. Type /help for available commands.', 'error');
+                    }
+                } else if (state === 'platform_selection') {
+                    handlePlatformSelection(command);
+                } else if (state === 'waiting_for_pin') {
+                    if (command === correctPin) {
+                        appendOutput('Access granted.', 'success');
+                        displayData(selectedPlatform);
+                    } else {
+                        pinAttempts++;
+                        if (pinAttempts >= 3) {
+                            appendOutput('Too many failed attempts. System locked.', 'error');
+                            state = 'locked';
+                        } else {
+                            appendOutput(`Invalid PIN. ${3 - pinAttempts} attempts remaining.`, 'error');
+                        }
+                    }
+                } else if (state === 'platform_selected') {
+                    if (command === '/retrieve') {
+                        displayData(selectedPlatform);
+                    } else if (command === '/clear') {
+                        output.innerHTML = '';
+                        dataTable.style.display = 'none';
+                        appendOutput('Terminal cleared.', 'success');
+                        appendOutput('Type /retrieve to fetch data or /st to select a new platform.', 'info');
+                    } else if (command === '/st') {
+                        showPlatformMenu();
+                    } else if (command === '/help') {
+                        showHelp();
+                    } else {
+                        appendOutput('Invalid command. Type /help for available commands.', 'error');
+                    }
+                } else if (state === 'locked') {
+                    appendOutput('System is locked. Please contact administrator.', 'error');
+                }
+            }
+        });
+        
+        // Focus on input when page loads
+        commandInput.focus();
+        
+        // Resize canvas on window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
