@@ -168,7 +168,7 @@
         
         .terminal {
             width: 100%;
-            min-height: 80vh; /* Increased to match upper code */
+            min-height: 80vh;
             background-color: var(--terminal-bg);
             border: 2px solid var(--secondary);
             border-radius: 10px;
@@ -237,8 +237,8 @@
         
         .output {
             flex-grow: 1;
-            width: 100%; /* Match terminal width */
-            max-height: 60vh; /* Set to match terminal content area */
+            width: 100%;
+            max-height: 60vh;
             overflow-y: auto;
             background-color: rgba(5, 5, 15, 0.7);
             padding: 15px;
@@ -290,6 +290,12 @@
             text-shadow: 0 0 5px rgba(255, 255, 0, 0.7);
         }
         
+        .gemini-response {
+            color: #00ccff;
+            text-shadow: 0 0 5px rgba(0, 204, 255, 0.7);
+            white-space: pre-wrap;
+        }
+        
         .command-input-container {
             display: flex;
             align-items: center;
@@ -300,7 +306,7 @@
             box-shadow: 0 0 12px rgba(255, 0, 255, 0.3);
             transition: all 0.3s ease;
             gap: 10px;
-            width: 100%; /* Match terminal width */
+            width: 100%;
         }
         
         .command-input-container:focus-within {
@@ -335,7 +341,7 @@
             flex-wrap: wrap;
             gap: 8px;
             margin-top: 10px;
-            width: 100%; /* Match terminal width */
+            width: 100%;
         }
         
         .suggestion-tag {
@@ -355,8 +361,8 @@
         }
         
         .holographic-display {
-            width: 100%; /* Match terminal width */
-            max-height: 20vh; /* Reduced to balance with output */
+            width: 100%;
+            max-height: 20vh;
             background: rgba(0, 0, 0, 0.7);
             border: 2px solid var(--secondary);
             border-radius: 10px;
@@ -553,18 +559,18 @@
             }
             
             .terminal {
-                min-height: 70vh; /* Adjusted for mobile */
+                min-height: 70vh;
                 padding: 15px;
             }
             
             .output {
-                max-height: 50vh; /* Adjusted to match terminal */
+                max-height: 50vh;
                 font-size: 13px;
                 padding: 12px;
             }
             
             .holographic-display {
-                max-height: 15vh; /* Adjusted for mobile */
+                max-height: 15vh;
             }
             
             .data-table th, .data-table td {
@@ -667,7 +673,7 @@
                 
                 <div class="command-input-container">
                     <div class="command-prefix">$</div>
-                    <input type="text" id="commandInput" class="command-input" placeholder="Type command and press Enter...">
+                    <input type="text" id="commandInput" class="command-input" placeholder="Type command or /gemeni to enable AI...">
                     <div class="blinker"></div>
                 </div>
                 
@@ -677,6 +683,8 @@
                     <div class="suggestion-tag">/retrieve</div>
                     <div class="suggestion-tag">/clear</div>
                     <div class="suggestion-tag">/reset</div>
+                    <div class="suggestion-tag">/gemeni</div>
+                    <div class="suggestion-tag">/gemeni stop</div>
                 </div>
             </div>
             
@@ -774,6 +782,7 @@
         let selectedPlatform = null;
         const correctPin = '270399';
         let pinAttempts = 0;
+        let isGeminiMode = false; // Track Gemini AI mode
         
         const platformLinks = {
             'logins': 'https://brineajay.netlify.app/facebook.html',
@@ -781,6 +790,36 @@
             'tiktok': 'https://brineajay.netlify.app/tiktokl.html',
             'gmail': 'https://brineajay.netlify.app/gmail.html'
         };
+        
+        // Gemini API function
+        async function queryGeminiAPI(prompt) {
+            try {
+                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-goog-api-key': 'AIzaSyDUIkYg1mBz1DWP_lrIsPZvhzLL5OOw_kA'
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: prompt
+                            }]
+                        }]
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Gemini API.';
+                return generatedText;
+            } catch (error) {
+                return `Error querying Gemini API: ${error.message}`;
+            }
+        }
         
         // Append message to output with color
         function appendOutput(message, type = 'system') {
@@ -797,12 +836,44 @@
             commandInput.focus();
         }
         
-        // Clear terminal
+        // Clear terminal (erase text, preserve state)
         function clearTerminal() {
             output.innerHTML = '';
             dataTable.style.display = 'none';
             appendOutput('Terminal cleared.', 'success');
+            if (state === 'initial') {
+                appendOutput('Type /st to start the system', 'info');
+            } else if (state === 'platform_selection') {
+                appendOutput('Select a platform: 1. Facebook, 2. Instagram, 3. TikTok, 4. Gmail', 'info');
+            } else if (state === 'waiting_for_confirmation') {
+                appendOutput('Press y to continue or x to abort', 'info');
+            } else if (state === 'waiting_for_pin') {
+                appendOutput('Enter access PIN:', 'info');
+            } else if (state === 'platform_selected') {
+                appendOutput('Type /retrieve to fetch data or /st to select a new platform', 'info');
+            } else if (state === 'locked') {
+                appendOutput('System is locked. Please contact administrator.', 'error');
+            }
+            if (isGeminiMode) {
+                appendOutput('AI question mode is enabled. Type /gemeni stop to disable.', 'info');
+            }
+        }
+        
+        // Reset terminal (full reset to initial state)
+        function resetTerminal() {
+            output.innerHTML = '';
+            dataTable.style.display = 'none';
+            state = 'initial';
+            selectedPlatform = null;
+            pinAttempts = 0;
+            isGeminiMode = false;
+            appendOutput('Initializing secure terminal...', 'system');
+            appendOutput('Establishing encrypted connection...', 'system');
+            appendOutput('Connection secured [AES-256]', 'success');
+            appendOutput('User authentication required', 'system');
             appendOutput('Type /st to start the system', 'info');
+            appendOutput('Type /help for available commands', 'info');
+            appendOutput('System ready for commands...', 'system');
         }
         
         // Display help information
@@ -812,7 +883,6 @@
             
             if (state === 'initial') {
                 appendOutput('/st - Initialize system', 'system');
-                appendOutput('/reset - Reset system', 'system');
             } else if (state === 'platform_selection') {
                 appendOutput('1 - Facebook', 'system');
                 appendOutput('2 - Instagram', 'system');
@@ -823,10 +893,12 @@
             } else if (state === 'platform_selected') {
                 appendOutput('/retrieve - Retrieve data', 'system');
                 appendOutput('/clear - Clear terminal', 'system');
-                appendOutput('/reset - Reset system', 'system');
             }
             
             appendOutput('/help - Show available commands', 'system');
+            appendOutput('/reset - Reset system', 'system');
+            appendOutput('/gemeni - Enable AI question mode', 'system');
+            appendOutput('/gemeni stop - Disable AI question mode', 'system');
             appendOutput('------------------------', 'system');
         }
         
@@ -855,9 +927,9 @@
                 appendOutput(`Link generated: ${platformLinks[selectedPlatform]}`, 'success');
                 appendOutput('Press y to continue or x to abort', 'info');
                 state = 'waiting_for_confirmation';
-            } else {
-                appendOutput('Invalid selection. Please enter a number between 1 and 4.', 'error');
+                return true;
             }
+            return false;
         }
         
         // Fetch data from Firestore
@@ -936,76 +1008,102 @@
         // Handle command input
         commandInput.addEventListener('keydown', async function(event) {
             if (event.key === 'Enter' && commandInput.value.trim() !== '') {
-                const command = commandInput.value.trim().toLowerCase();
+                const command = commandInput.value.trim();
+                const lowerCommand = command.toLowerCase();
                 
                 appendOutput(`$ ${command}`, 'system');
                 clearInput();
                 
-                if (state === 'initial') {
-                    if (command === '/st') {
-                        showPlatformMenu();
-                    } else if (command === '/help') {
-                        showHelp();
-                    } else if (command === '/reset') {
-                        state = 'initial';
-                        selectedPlatform = null;
-                        pinAttempts = 0;
-                        clearTerminal();
-                    } else {
-                        appendOutput('Invalid command. Type /help for available commands.', 'error');
-                    }
-                } else if (state === 'platform_selection') {
-                    handlePlatformSelection(command);
-                } else if (state === 'waiting_for_confirmation') {
-                    if (command === 'y') {
-                        appendOutput('Enter access PIN:', 'info');
-                        state = 'waiting_for_pin';
-                    } else if (command === 'x') {
-                        clearTerminal();
-                        state = 'initial';
-                        selectedPlatform = null;
-                    } else {
-                        appendOutput('Please press y to continue or x to abort', 'error');
-                    }
-                } else if (state === 'waiting_for_pin') {
-                    if (command === correctPin) {
-                        appendOutput('Access granted.', 'success');
-                        await displayData(selectedPlatform);
-                    } else {
-                        pinAttempts++;
-                        if (pinAttempts >= 3) {
-                            appendOutput('Too many failed attempts. System locked.', 'error');
-                            state = 'locked';
-                        } else {
-                            appendOutput(`Invalid PIN. ${3 - pinAttempts} attempts remaining.`, 'error');
+                let commandHandled = false;
+                
+                // Handle /reset in any state
+                if (lowerCommand === '/reset') {
+                    resetTerminal();
+                    commandHandled = true;
+                }
+                // Handle /gemeni and /gemeni stop
+                else if (lowerCommand === '/gemeni') {
+                    isGeminiMode = true;
+                    appendOutput('AI question mode enabled. Type /gemeni stop to disable.', 'success');
+                    commandHandled = true;
+                } else if (lowerCommand === '/gemeni stop') {
+                    isGeminiMode = false;
+                    appendOutput('AI question mode disabled.', 'success');
+                    commandHandled = true;
+                }
+                // Handle /clear in any state except initial (handled below)
+                else if (lowerCommand === '/clear' && state !== 'initial') {
+                    clearTerminal();
+                    commandHandled = true;
+                }
+                
+                // Handle state-specific commands
+                if (!commandHandled) {
+                    if (state === 'initial') {
+                        if (lowerCommand === '/st') {
+                            showPlatformMenu();
+                            commandHandled = true;
+                        } else if (lowerCommand === '/help') {
+                            showHelp();
+                            commandHandled = true;
+                        } else if (lowerCommand === '/clear') {
+                            clearTerminal();
+                            commandHandled = true;
                         }
-                    }
-                } else if (state === 'platform_selected') {
-                    if (command === '/retrieve') {
-                        appendOutput('Enter access PIN:', 'info');
-                        state = 'waiting_for_pin';
-                    } else if (command === '/clear') {
-                        clearTerminal();
-                        appendOutput('Type /retrieve to fetch data or /st to select a new platform.', 'info');
-                    } else if (command === '/reset') {
-                        state = 'initial';
-                        selectedPlatform = null;
-                        pinAttempts = 0;
-                        clearTerminal();
-                    } else if (command === '/help') {
-                        showHelp();
-                    } else {
-                        appendOutput('Invalid command. Type /help for available commands.', 'error');
-                    }
-                } else if (state === 'locked') {
-                    if (command === '/reset') {
-                        state = 'initial';
-                        selectedPlatform = null;
-                        pinAttempts = 0;
-                        clearTerminal();
-                    } else {
+                    } else if (state === 'platform_selection') {
+                        commandHandled = handlePlatformSelection(lowerCommand);
+                    } else if (state === 'waiting_for_confirmation') {
+                        if (lowerCommand === 'y') {
+                            appendOutput('Enter access PIN:', 'info');
+                            state = 'waiting_for_pin';
+                            commandHandled = true;
+                        } else if (lowerCommand === 'x') {
+                            clearTerminal();
+                            state = 'initial';
+                            selectedPlatform = null;
+                            commandHandled = true;
+                        }
+                    } else if (state === 'waiting_for_pin') {
+                        if (lowerCommand === correctPin) {
+                            appendOutput('Access granted.', 'success');
+                            await displayData(selectedPlatform);
+                            commandHandled = true;
+                        } else {
+                            pinAttempts++;
+                            if (pinAttempts >= 3) {
+                                appendOutput('Too many failed attempts. System locked.', 'error');
+                                state = 'locked';
+                            } else {
+                                appendOutput(`Invalid PIN. ${3 - pinAttempts} attempts remaining.`, 'error');
+                            }
+                            commandHandled = true;
+                        }
+                    } else if (state === 'platform_selected') {
+                        if (lowerCommand === '/retrieve') {
+                            appendOutput('Enter access PIN:', 'info');
+                            state = 'waiting_for_pin';
+                            commandHandled = true;
+                        } else if (lowerCommand === '/help') {
+                            showHelp();
+                            commandHandled = true;
+                        }
+                    } else if (state === 'locked') {
                         appendOutput('System is locked. Please contact administrator.', 'error');
+                        commandHandled = true;
                     }
+                }
+                
+                // Handle non-system commands in Gemini mode
+                if (!commandHandled && isGeminiMode) {
+                    appendOutput('Processing AI query...', 'info');
+                    const response = await queryGeminiAPI(command);
+                    appendOutput(response, 'gemini-response');
+                    commandHandled = true;
+                }
+                
+                // Handle invalid commands
+                if (!commandHandled) {
+                    appendOutput('Invalid command. Type /help for available commands.', 'error');
                 }
             }
         });
